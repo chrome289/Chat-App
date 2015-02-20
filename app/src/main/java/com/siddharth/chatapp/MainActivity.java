@@ -1,58 +1,49 @@
 package com.siddharth.chatapp;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.os.AsyncTask;
-import android.support.v7.app.ActionBarActivity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 
 public class MainActivity extends ActionBarActivity
 {
-    public Socket socket;public String username="";
+    public Socket socket;
+    public String username = "", password = "", send_to = "";
+    ArrayList<String> friends = new ArrayList<>();
+    SharedPreferences sharedPref;
+    SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        TextView t=(TextView)findViewById(R.id.textView);
+        TextView t = (TextView) findViewById(R.id.textView);
         t.setMovementMethod(new ScrollingMovementMethod());
-        AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
-        alert.setTitle("Enter Username");
+        sharedPref = getSharedPreferences("setting", Context.MODE_PRIVATE);
+        editor = sharedPref.edit();
+        username = sharedPref.getString("username", "");
+        password = sharedPref.getString("password", "");
 
-        final EditText input = new EditText(this);
-        alert.setView(input);
-
-        alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-                username= String.valueOf(input.getText());
-            }
-        });
-        alert.setCancelable(false);
-        alert.show();
         try
         {
             socket = IO.socket("http://192.168.1.3:80");
@@ -66,7 +57,7 @@ public class MainActivity extends ActionBarActivity
             @Override
             public void call(Object... args)
             {
-                Log.v("con","nected");
+                Log.v("con", "nected");
             }
 
         }).on("messaged", new Emitter.Listener()
@@ -75,24 +66,34 @@ public class MainActivity extends ActionBarActivity
             @Override
             public void call(Object... args)
             {
-                Log.v("232", String.valueOf(args[0]));
-            }
-
-        }).on(Socket.EVENT_MESSAGE, new Emitter.Listener()
-        {
-
-            @Override
-            public void call(Object... args)
-            {
-                final String temp= String.valueOf(args[0])+"\n";
-                Log.v("Re", temp);
+                final String temp = String.valueOf(args[0]);
+                Log.v("lo", temp);
                 runOnUiThread(new Runnable()
                 {
                     @Override
                     public void run()
                     {
-                        TextView t = (TextView) findViewById(R.id.textView);
-                        t.setText(t.getText()+temp);
+                        Toast.makeText(getApplicationContext(), temp, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+        }).on("addfriend", new Emitter.Listener()
+        {
+
+            @Override
+            public void call(Object... args)
+            {
+                final String temp = String.valueOf(args[0]);
+                Log.v("lo", temp);
+                runOnUiThread(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        friends.add(temp);
+                        Log.v("Dasda", "sdfsdf");
+                        updatelist();
                     }
                 });
             }
@@ -107,10 +108,23 @@ public class MainActivity extends ActionBarActivity
             }
 
         });
+        socket.connect();
+        Object[] args = new Object[1];
+        args[0] = username;
+        socket.emit("displayfriends", args[0]);
+        Log.v("4343", "3443");
+        ListView lv = (ListView) findViewById(R.id.listView);
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+            {
+                send_to = (String) ((TextView) view).getText();
+            }
+        });
     }
 
-
     @Override
+
     public boolean onCreateOptionsMenu(Menu menu)
     {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -130,13 +144,10 @@ public class MainActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
-    public void foo(View view) throws IOException, URISyntaxException
+    /*public void foo(View view) throws IOException, URISyntaxException
     {
         //new RequestTask().execute("http://192.168.1.3:80");
         socket.connect();
-        Object[] o=new Object[1];
-        o[0]=username;
-        socket.emit("storeinfo",o);
     }
 
     class RequestTask extends AsyncTask<String, String, String>
@@ -186,23 +197,33 @@ public class MainActivity extends ActionBarActivity
             TextView t = (TextView) findViewById(R.id.textView);
             t.setText(result);
         }
+    }*/
+
+    private void updatelist()
+    {
+        ListView l = (ListView) findViewById(R.id.listView);
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_list_item_1,
+                friends);
+
+        l.setAdapter(arrayAdapter);
     }
 
     public void bar(View view)
     {
         socket.disconnect();
         TextView t = (TextView) findViewById(R.id.textView);
-        t.setText(t.getText()+"Disconnected\n");
-
+        t.setText(t.getText() + "Disconnected\n");
     }
 
     public void taken(View view)
     {
-        Object[] args=new Object[2];
-        EditText e=(EditText)findViewById(R.id.editText);
-        args[0]=e.getText();
-        args[1]=username;
-        socket.emit("takethis", args[0],args[1]);
+        Object[] args = new Object[2];
+        EditText e = (EditText) findViewById(R.id.editText);
+        ListView l = (ListView) findViewById(R.id.listView);
+        args[0] = e.getText();
+        args[1] = send_to;
+        socket.emit("takethis", args[0], args[1]);
     }
-
 }
