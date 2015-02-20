@@ -15,48 +15,29 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentBottom="true"
-        android:layout_below="@+id/button3"
         android:scrollbars = "vertical|horizontal"
         android:nestedScrollingEnabled="true"
         android:gravity="bottom"/>
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Take This"
-        android:id="@+id/button3"
-        android:onClick="taken"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"/>
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/editText"
-        android:layout_above="@+id/button3"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"/>
-
-    <ListView
-        android:layout_width="wrap_content"
-        android:layout_height="400dp"
-        android:id="@+id/listView"
-        android:choiceMode="singleChoice"
-        android:layout_below="@+id/textView4"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="10dp"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Contacts"
         android:id="@+id/textView4"
+        android:textSize="24dp"
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@+id/textView"
-        android:layout_toEndOf="@+id/textView"
-        android:textSize="24dp"/>
+        android:layout_toEndOf="@+id/textView"/>
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="400dp"
+        android:id="@+id/listView"
+        android:choiceMode="singleChoice"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/textView4"
+        android:layout_marginTop="10dp"
+        android:paddingLeft="15dp"/>
+
 
 </RelativeLayout>

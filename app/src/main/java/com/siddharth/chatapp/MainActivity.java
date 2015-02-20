@@ -1,7 +1,9 @@
 package com.siddharth.chatapp;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.text.method.ScrollingMovementMethod;
@@ -11,15 +13,23 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
@@ -60,7 +70,7 @@ public class MainActivity extends ActionBarActivity
                 Log.v("con", "nected");
             }
 
-        }).on("messaged", new Emitter.Listener()
+        })/*.on("messaged", new Emitter.Listener()
         {
 
             @Override
@@ -78,7 +88,7 @@ public class MainActivity extends ActionBarActivity
                 });
             }
 
-        }).on("addfriend", new Emitter.Listener()
+        })*/.on("addfriend", new Emitter.Listener()
         {
 
             @Override
@@ -112,15 +122,25 @@ public class MainActivity extends ActionBarActivity
         Object[] args = new Object[1];
         args[0] = username;
         socket.emit("displayfriends", args[0]);
-        Log.v("4343", "3443");
+        //Log.v("4343", "3443");
         ListView lv = (ListView) findViewById(R.id.listView);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id)
             {
-                send_to = (String) ((TextView) view).getText();
+                editor.putString("send_to", (String) ((TextView) view).getText());
+                editor.commit();
+                openchat();
             }
         });
+    }
+
+    private void updatelist()
+    {
+        ListView l = (ListView) findViewById(R.id.listView);
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, friends);
+
+        l.setAdapter(arrayAdapter);
     }
 
     @Override
@@ -144,7 +164,7 @@ public class MainActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
-    /*public void foo(View view) throws IOException, URISyntaxException
+    public void foo(View view) throws IOException, URISyntaxException
     {
         //new RequestTask().execute("http://192.168.1.3:80");
         socket.connect();
@@ -197,17 +217,12 @@ public class MainActivity extends ActionBarActivity
             TextView t = (TextView) findViewById(R.id.textView);
             t.setText(result);
         }
-    }*/
+    }
 
-    private void updatelist()
+
+    private void openchat()
     {
-        ListView l = (ListView) findViewById(R.id.listView);
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_list_item_1,
-                friends);
-
-        l.setAdapter(arrayAdapter);
+        startActivity(new Intent(this, chatwin.class));
     }
 
     public void bar(View view)
@@ -217,13 +232,5 @@ public class MainActivity extends ActionBarActivity
         t.setText(t.getText() + "Disconnected\n");
     }
 
-    public void taken(View view)
-    {
-        Object[] args = new Object[2];
-        EditText e = (EditText) findViewById(R.id.editText);
-        ListView l = (ListView) findViewById(R.id.listView);
-        args[0] = e.getText();
-        args[1] = send_to;
-        socket.emit("takethis", args[0], args[1]);
-    }
+
 }

@@ -36,6 +36,8 @@ public class login extends ActionBarActivity
             editor.putString("username", "");
         if (!sharedPref.contains("password"))
             editor.putString("password", "");
+        if (!sharedPref.contains("send_to"))
+            editor.putString("send_to", "");
         editor.commit();
 
         try
