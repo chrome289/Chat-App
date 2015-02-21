@@ -7,6 +7,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -113,6 +114,24 @@ public class chatwin extends ActionBarActivity
                     });
                 }
 
+            }).on("done", new Emitter.Listener()
+            {
+
+                @Override
+                public void call(Object... args)
+                {
+                    Log.v("", "done");
+                    runOnUiThread(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            Button b=(Button)findViewById(R.id.button2);
+                            b.setEnabled(true);
+                        }
+                    });
+                }
+
             }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener()
             {
 
@@ -138,5 +157,14 @@ public class chatwin extends ActionBarActivity
         args[1]=username;
         args[2] = send_to;
         socket.emit("takethis", args[0],args[1] ,args[2]);
+    }
+    public void refresh(View view)
+    {
+        Object[]args=new Object[2];
+        args[0]=username;
+        args[1]=send_to;
+        socket.emit("refresh",args[0],args[1]);
+        Button b=(Button)findViewById(R.id.button2);
+        b.setEnabled(false);
     }
 }
