@@ -90,7 +90,7 @@ public class chatwin extends ActionBarActivity
                         public void run()
                         {
                             TextView t = (TextView) findViewById(R.id.textView);
-                            t.setText(t.getText() + send_to+" has not yet recieved your last message " + "\n\n");
+                            t.setText(t.getText() + send_to + " has not yet recieved your last message " + "\n\n");
                         }
                     });
                 }
@@ -143,7 +143,18 @@ public class chatwin extends ActionBarActivity
 
             });
             socket.connect();
+            restorehistory();
         }
+    }
+
+    private void restorehistory()
+    {
+        Object[]args=new Object[2];
+        args[0]=username;
+        args[1]=send_to;
+        socket.emit("restorehistory",args[0],args[1]);
+        Button b=(Button)findViewById(R.id.button2);
+        b.setEnabled(false);
     }
 
     public void taken(View view)
