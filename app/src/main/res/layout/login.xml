@@ -29,7 +29,10 @@
         android:layout_alignTop="@+id/textView2"
         android:layout_toRightOf="@+id/textView2"
         android:layout_marginLeft="39dp"
-        android:layout_marginStart="39dp"/>
+        android:layout_marginStart="39dp"
+        android:capitalize="none"
+        android:inputType="text"
+        android:textStyle="normal"/>
 
     <EditText
         android:layout_width="150dp"
@@ -39,7 +42,8 @@
         android:layout_alignLeft="@+id/editText2"
         android:layout_alignStart="@+id/editText2"
         android:layout_alignRight="@+id/editText2"
-        android:layout_alignEnd="@+id/editText2"/>
+        android:layout_alignEnd="@+id/editText2"
+        android:inputType="textVisiblePassword"/>
 
     <Button
         android:layout_width="wrap_content"

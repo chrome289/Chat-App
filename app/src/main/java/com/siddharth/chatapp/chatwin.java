@@ -4,20 +4,18 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.ListView;
 
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
 
 import java.net.URISyntaxException;
-
-
+import java.util.ArrayList;
 
 
 public class chatwin extends ActionBarActivity
@@ -26,7 +24,8 @@ public class chatwin extends ActionBarActivity
     String send_to,username;
     SharedPreferences.Editor editor;
     SharedPreferences sharedPref;
-
+    ArrayList<String> chatlist = new ArrayList<>();
+    chatlistadapter arrayAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -36,8 +35,13 @@ public class chatwin extends ActionBarActivity
         editor = sharedPref.edit();
         send_to = sharedPref.getString("send_to", "");
         username = sharedPref.getString("username", "");
-        TextView t = (TextView) findViewById(R.id.textView);
-        t.setMovementMethod(new ScrollingMovementMethod());
+       /*TextView t = (TextView) findViewById(R.id.textView);
+        t.setMovementMethod(new ScrollingMovementMethod());*/
+        ListView l = (ListView) findViewById(R.id.listView2);
+        arrayAdapter =new chatlistadapter(this, chatlist);
+        l.setDivider(null);
+        l.setAdapter(arrayAdapter);
+
         try
         {
             socket = IO.socket("http://192.168.1.3:80");
@@ -62,16 +66,15 @@ public class chatwin extends ActionBarActivity
                 @Override
                 public void call(Object... args)
                 {
-                    final String temp = String.valueOf(args[0]) + "\n\n";
+                    final String temp = String.valueOf(args[0]);
                     Log.v("lo", temp);
                     runOnUiThread(new Runnable()
                     {
                         @Override
                         public void run()
                         {
-                            TextView t = (TextView) findViewById(R.id.textView);
-                            t.setText(t.getText() + temp);
-                            Log.v("asdas", "sdfsdf");
+                            chatlist.add(temp);
+                            arrayAdapter.notifyDataSetChanged();
                         }
                     });
                 }
@@ -89,8 +92,8 @@ public class chatwin extends ActionBarActivity
                         @Override
                         public void run()
                         {
-                            TextView t = (TextView) findViewById(R.id.textView);
-                            t.setText(t.getText() + send_to + " has not yet recieved your last message " + "\n\n");
+                            /*TextView t = (TextView) findViewById(R.id.textView);
+                            t.setText(t.getText() + send_to + " has not yet recieved your last message " + "\n\n");*/
                         }
                     });
                 }
@@ -101,15 +104,15 @@ public class chatwin extends ActionBarActivity
                 @Override
                 public void call(Object... args)
                 {
-                    final String temp = String.valueOf(args[0]) + "\n\n";
+                    final String temp = String.valueOf(args[0]);
                     Log.v("", "sent");
                     runOnUiThread(new Runnable()
                     {
                         @Override
                         public void run()
                         {
-                            TextView t = (TextView) findViewById(R.id.textView);
-                            t.setText(t.getText()+String.valueOf("You  :  "+temp));
+                            chatlist.add(("You  :  "+temp));
+                            arrayAdapter.notifyDataSetChanged();
                         }
                     });
                 }
@@ -143,7 +146,10 @@ public class chatwin extends ActionBarActivity
 
             });
             socket.connect();
+
             restorehistory();
+
+
         }
     }
 
