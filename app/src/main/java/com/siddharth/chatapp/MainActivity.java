@@ -3,7 +3,6 @@ package com.siddharth.chatapp;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.text.method.ScrollingMovementMethod;
@@ -20,16 +19,6 @@ import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
@@ -139,7 +128,6 @@ public class MainActivity extends ActionBarActivity
     {
         ListView l = (ListView) findViewById(R.id.listView);
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, friends);
-
         l.setAdapter(arrayAdapter);
     }
 
@@ -164,7 +152,7 @@ public class MainActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
-    public void foo(View view) throws IOException, URISyntaxException
+    /*public void foo(View view) throws IOException, URISyntaxException
     {
         //new RequestTask().execute("http://192.168.1.3:80");
         socket.connect();
@@ -217,20 +205,19 @@ public class MainActivity extends ActionBarActivity
             TextView t = (TextView) findViewById(R.id.textView);
             t.setText(result);
         }
-    }
-
+    }*/
 
     private void openchat()
     {
         startActivity(new Intent(this, chatwin.class));
     }
 
-    public void bar(View view)
+    /*public void bar(View view)
     {
         socket.disconnect();
         TextView t = (TextView) findViewById(R.id.textView);
         t.setText(t.getText() + "Disconnected\n");
-    }
+    }*/
 
 
 }

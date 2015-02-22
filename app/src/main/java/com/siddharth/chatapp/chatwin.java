@@ -153,6 +153,7 @@ public class chatwin extends ActionBarActivity
         }
     }
 
+    //restore previous chat history
     private void restorehistory()
     {
         Object[]args=new Object[2];
@@ -163,6 +164,7 @@ public class chatwin extends ActionBarActivity
         b.setEnabled(false);
     }
 
+    //send message
     public void taken(View view)
     {
         String temp;
@@ -175,6 +177,8 @@ public class chatwin extends ActionBarActivity
         args[2] = send_to;
         socket.emit("takethis", args[0],args[1] ,args[2]);
     }
+
+    //refresh chat history
     public void refresh(View view)
     {
         Object[]args=new Object[2];
