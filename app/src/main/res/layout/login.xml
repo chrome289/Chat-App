@@ -48,24 +48,34 @@
         android:inputType="textVisiblePassword"/>
 
     <Button
-        android:layout_width="140dp"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:text="Submit"
         android:id="@+id/button4"
         android:onClick="submit"
-        android:layout_below="@+id/editText3"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="45dp"/>
+        android:layout_marginBottom="48dp"
+        android:layout_above="@+id/sign_in"
+        android:layout_alignLeft="@+id/textView3"
+        android:layout_alignStart="@+id/textView3"/>
 
     <com.google.android.gms.common.SignInButton
         android:id="@+id/sign_in"
         android:layout_width="140dp"
         android:layout_height="50dp"
-        android:layout_marginBottom="37dp"
+        android:layout_marginBottom="50dp"
         android:nestedScrollingEnabled="false"
         android:onClick="dummy"
         android:layout_alignParentBottom="true"
-        android:layout_alignLeft="@+id/button4"
-        android:layout_alignStart="@+id/button4"/>
+        android:layout_centerHorizontal="true"/>
+
+    <Button
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:text="Sign Up"
+        android:id="@+id/button3"
+        android:onClick="signup"
+        android:layout_alignTop="@+id/button4"
+        android:layout_alignRight="@+id/editText3"
+        android:layout_alignEnd="@+id/editText3"/>
 
 </RelativeLayout>

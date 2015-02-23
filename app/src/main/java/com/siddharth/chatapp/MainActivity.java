@@ -3,6 +3,8 @@ package com.siddharth.chatapp;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.text.method.ScrollingMovementMethod;
@@ -29,6 +31,7 @@ public class MainActivity extends ActionBarActivity
     ArrayList<String> friends = new ArrayList<>();
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
+    SQLiteDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -91,6 +94,11 @@ public class MainActivity extends ActionBarActivity
                     public void run()
                     {
                         friends.add(temp);
+                        Cursor c = db.rawQuery("select * from user where friend = \"" + temp + "\"", null);
+                        if (c.getCount() == 0)
+                        {
+                            db.execSQL("insert into user values(\"" + temp + "\");");
+                        }
                         Log.v("Dasda", "sdfsdf");
                         updatelist();
                     }
@@ -108,9 +116,24 @@ public class MainActivity extends ActionBarActivity
 
         });
         socket.connect();
-        Object[] args = new Object[1];
-        args[0] = username;
-        socket.emit("displayfriends", args[0]);
+        db = openOrCreateDatabase("database", Context.MODE_PRIVATE, null);
+        db.execSQL("create table if not exists user('friend' VARCHAR NOT NULL);");
+        db.execSQL("create table if not exists localchat('friend1' varchar not null , 'friend2' varchar not null ,'message' varchar);");
+        if (!socket.connected())
+        {
+            Cursor c = db.rawQuery("select * from user", null);
+            while (c.moveToNext())
+            {
+                friends.add(c.getString(0));
+                updatelist();
+            }
+        }
+        else
+        {
+            Object[] args = new Object[1];
+            args[0] = username;
+            socket.emit("displayfriends", args[0]);
+        }
         //Log.v("4343", "3443");
         ListView lv = (ListView) findViewById(R.id.listView);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener()
@@ -122,6 +145,7 @@ public class MainActivity extends ActionBarActivity
                 openchat();
             }
         });
+
     }
 
     private void updatelist()
@@ -152,72 +176,9 @@ public class MainActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
-    /*public void foo(View view) throws IOException, URISyntaxException
-    {
-        //new RequestTask().execute("http://192.168.1.3:80");
-        socket.connect();
-    }
-
-    class RequestTask extends AsyncTask<String, String, String>
-    {
-
-        @Override
-        protected String doInBackground(String... uri)
-        {
-            HttpClient httpclient = new DefaultHttpClient();
-            HttpResponse response;
-            String responseString = null;
-            try
-            {
-                response = httpclient.execute(new HttpGet(uri[0]));
-                StatusLine statusLine = response.getStatusLine();
-                if (statusLine.getStatusCode() == HttpStatus.SC_OK)
-                {
-                    ByteArrayOutputStream out = new ByteArrayOutputStream();
-                    response.getEntity().writeTo(out);
-                    responseString = out.toString();
-                    Log.v("dfs", responseString);
-                    out.close();
-                }
-                else
-                {
-                    //Closes the connection.
-                    response.getEntity().getContent().close();
-                    throw new IOException(statusLine.getReasonPhrase());
-                }
-            }
-            catch (ClientProtocolException e)
-            {
-                Log.v("dfs", "1");
-            }
-            catch (IOException e)
-            {
-                Log.v("dfs", "2");
-            }
-            return responseString;
-        }
-
-        @Override
-        protected void onPostExecute(String result)
-        {
-            super.onPostExecute(result);
-            //Do anything with response..
-            TextView t = (TextView) findViewById(R.id.textView);
-            t.setText(result);
-        }
-    }*/
-
     private void openchat()
     {
         startActivity(new Intent(this, chatwin.class));
     }
-
-    /*public void bar(View view)
-    {
-        socket.disconnect();
-        TextView t = (TextView) findViewById(R.id.textView);
-        t.setText(t.getText() + "Disconnected\n");
-    }*/
-
 
 }

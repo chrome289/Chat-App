@@ -32,7 +32,7 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
     /* A flag indicating that a PendingIntent is in progress and prevents
      * us from starting further intents.
      */
-    private boolean mIntentInProgress,is_connected;
+    private boolean mIntentInProgress, is_connected;
     private Socket socket;
     public String username = "", password = "";
     public boolean login = false;
@@ -53,6 +53,8 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
             editor.putString("password", "");
         if (!sharedPref.contains("send_to"))
             editor.putString("send_to", "");
+        if(!sharedPref.contains("loginsetup"))
+            editor.putInt("loginsetup",0);
         editor.commit();
 
         //connecting socket
@@ -143,6 +145,25 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
                 });
             }
 
+        }).on("signup", new Emitter.Listener()
+        {
+
+            @Override
+            public void call(Object... args)
+            {
+                final String temp = String.valueOf(args[0]) + "\n";
+                Log.v("lo", temp);
+                runOnUiThread(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        login = false;
+                        Toast.makeText(getApplicationContext(), temp, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
         }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener()
         {
 
@@ -179,20 +200,20 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
     public void submit(View view)
     {
         EditText e = (EditText) findViewById(R.id.editText2);
-            username = String.valueOf(e.getText());
-            e = (EditText) findViewById(R.id.editText3);
-            password = String.valueOf(e.getText());
-            Object[] args = new Object[2];
-            args[0] = username;
-            args[1] = password;
-            socket.emit("login", args[0], args[1]);
-        }
+        username = String.valueOf(e.getText());
+        e = (EditText) findViewById(R.id.editText3);
+        password = String.valueOf(e.getText());
+        Object[] args = new Object[2];
+        args[0] = username;
+        args[1] = password;
+        socket.emit("login", args[0], args[1]);
+    }
 
     //google client start
     protected void onStart()
     {
         super.onStart();
-        mGoogleApiClient.connect();
+        //mGoogleApiClient.connect();
     }
 
     //client stop
@@ -313,14 +334,34 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
     public void onDestroy()
     {
         //google sign out
-        Log.v("des","troy");
+        Log.v("des", "troy");
         if (mGoogleApiClient.isConnected())
         {
-            Log.v("des","troy");
+            Log.v("des", "troy");
             Plus.AccountApi.clearDefaultAccount(mGoogleApiClient);
             mGoogleApiClient.disconnect();
             mGoogleApiClient.connect();
         }
         super.onDestroy();
+    }
+
+    public void signup(View view)
+    {
+        Object[] o = new Object[2];
+        EditText e = (EditText) findViewById(R.id.editText2);
+        username = String.valueOf(e.getText());
+        e = (EditText) findViewById(R.id.editText3);
+        password = String.valueOf(e.getText());
+        if (!username.isEmpty() && !password.isEmpty())
+        {
+            o[0] = username;
+            o[1] = password;
+            socket.emit("checkuserexists", o[0], o[1]);
+        }
+        else
+        {
+            Log.v("757","4287");
+            Toast.makeText(getApplicationContext(),"Fill all fields",Toast.LENGTH_SHORT);
+        }
     }
 }
