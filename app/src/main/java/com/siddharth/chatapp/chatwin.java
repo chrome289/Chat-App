@@ -54,7 +54,7 @@ public class chatwin extends ActionBarActivity
             e.printStackTrace();
         }
         db = openOrCreateDatabase("database", Context.MODE_PRIVATE, null);
-        db.execSQL("create table if not exists " + send_to + "('friend1' varchar not null , 'friend2' varchar not null ,'message' varchar,'delivered' integer);");
+        db.execSQL("create table if not exists '" + send_to + "'('friend1' varchar not null , 'friend2' varchar not null ,'message' varchar,'delivered' integer);");
 
         if (socket != null)
         {
@@ -79,7 +79,7 @@ public class chatwin extends ActionBarActivity
                         @Override
                         public void run()
                         {
-                            db.execSQL("insert into " + send_to + " values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
+                            db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
                             chatlist.add(send_to + "  :  " + temp);
                             arrayAdapter.notifyDataSetChanged();
                         }
@@ -116,7 +116,7 @@ public class chatwin extends ActionBarActivity
                         @Override
                         public void run()
                         {
-                            db.execSQL("insert into " + send_to + " values (\"" + username + "\" , \"" + send_to + "\" , \"" + temp + "\" , 1)");
+                            db.execSQL("insert into '" + send_to + "' values (\"" + username + "\" , \"" + send_to + "\" , \"" + temp + "\" , 1)");
                             chatlist.add(("You  :  " + temp));
                             arrayAdapter.notifyDataSetChanged();
                         }
@@ -152,7 +152,7 @@ public class chatwin extends ActionBarActivity
 
             });
             socket.connect();
-            Cursor c = db.rawQuery("select * from " + send_to, null);
+            Cursor c = db.rawQuery("select * from '" + send_to+"'", null);
             String temp;
             while (c.moveToNext())
             {
