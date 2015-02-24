@@ -13,7 +13,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -26,9 +25,12 @@ import java.util.ArrayList;
 
 public class MainActivity extends ActionBarActivity
 {
+    public ListView l;
+    public listviewadapter arrayAdapter;
     public Socket socket;
     public String username = "", password = "", send_to = "";
     ArrayList<String> friends = new ArrayList<>();
+    ArrayList<String> subtext = new ArrayList<>();
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
     SQLiteDatabase db;
@@ -45,6 +47,10 @@ public class MainActivity extends ActionBarActivity
         editor = sharedPref.edit();
         username = sharedPref.getString("username", "");
         password = sharedPref.getString("password", "");
+        ListView l = (ListView) findViewById(R.id.listView);
+        arrayAdapter = new listviewadapter(this, friends,subtext);
+//        l.setDivider(null);
+        l.setAdapter(arrayAdapter);
 
         try
         {
@@ -93,13 +99,20 @@ public class MainActivity extends ActionBarActivity
                     @Override
                     public void run()
                     {
-                        friends.add(temp);
                         Cursor c = db.rawQuery("select * from user where friend = \"" + temp + "\"", null);
+                        String mess = "";
                         if (c.getCount() == 0)
                         {
-                            db.execSQL("insert into user values(\"" + temp + "\");");
+                            db.execSQL("insert into user values(\"" + temp + "\",\"Empty\");");
+                        }
+                        else
+                        {
+                            c.moveToFirst();
+                            mess = c.getString(1);
                         }
                         Log.v("Dasda", "sdfsdf");
+                        friends.add(temp);
+                        subtext.add(mess);
                         updatelist();
                     }
                 });
@@ -116,15 +129,33 @@ public class MainActivity extends ActionBarActivity
 
         });
         socket.connect();
+        //intialize();
+        //Log.v("4343", "3443");
+        l = (ListView) findViewById(R.id.listView);
+        l.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+            {
+                String temp = (String)(((TextView) view.findViewById(R.id.text)).getText());
+                editor.putString("send_to", temp);
+                editor.commit();
+                openchat();
+            }
+        });
+
+    }
+
+    private void intialize()
+    {
         db = openOrCreateDatabase("database", Context.MODE_PRIVATE, null);
-        db.execSQL("create table if not exists user('friend' VARCHAR NOT NULL);");
+        db.execSQL("create table if not exists user('friend' VARCHAR NOT NULL,'lastmessage' varchar);");
         db.execSQL("create table if not exists localchat('friend1' varchar not null , 'friend2' varchar not null ,'message' varchar);");
         if (!socket.connected())
         {
             Cursor c = db.rawQuery("select * from user", null);
             while (c.moveToNext())
             {
-                friends.add(c.getString(0));
+                friends.add(c.getString(0) + "\n" + c.getString(1));
                 updatelist();
             }
         }
@@ -134,25 +165,13 @@ public class MainActivity extends ActionBarActivity
             args[0] = username;
             socket.emit("displayfriends", args[0]);
         }
-        //Log.v("4343", "3443");
-        ListView lv = (ListView) findViewById(R.id.listView);
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener()
-        {
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id)
-            {
-                editor.putString("send_to", (String) ((TextView) view).getText());
-                editor.commit();
-                openchat();
-            }
-        });
-
     }
 
     private void updatelist()
     {
-        ListView l = (ListView) findViewById(R.id.listView);
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, friends);
-        l.setAdapter(arrayAdapter);
+
+        arrayAdapter.notifyDataSetChanged();
+//        l.setAdapter(arrayAdapter);
     }
 
     @Override
@@ -181,4 +200,16 @@ public class MainActivity extends ActionBarActivity
         startActivity(new Intent(this, chatwin.class));
     }
 
+    @Override
+    protected void onResume()
+    {
+        if (friends.size() > 0)
+        {
+            friends.clear();
+            subtext.clear();
+            arrayAdapter.notifyDataSetChanged();
+        }
+        intialize();
+        super.onResume();
+    }
 }

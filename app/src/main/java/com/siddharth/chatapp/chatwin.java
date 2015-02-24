@@ -70,7 +70,7 @@ public class chatwin extends ActionBarActivity
             {
 
                 @Override
-                public void call(Object... args)
+                public void call(Object[]args)
                 {
                     final String temp = String.valueOf(args[0]);
                     Log.v("lo", temp);
@@ -79,6 +79,7 @@ public class chatwin extends ActionBarActivity
                         @Override
                         public void run()
                         {
+                            db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
                             db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
                             chatlist.add(send_to + "  :  " + temp);
                             arrayAdapter.notifyDataSetChanged();
@@ -98,7 +99,7 @@ public class chatwin extends ActionBarActivity
                         @Override
                         public void run()
                         {
-                            Toast toast = Toast.makeText(getApplicationContext(),"Message not sent", Toast.LENGTH_SHORT);
+                            Toast toast = Toast.makeText(getApplicationContext(), "Message not sent", Toast.LENGTH_SHORT);
                         }
                     });
                 }
@@ -116,8 +117,9 @@ public class chatwin extends ActionBarActivity
                         @Override
                         public void run()
                         {
+                            db.execSQL("update user set lastmessage = \"You  :  " + temp + "\" where friend = \"" + send_to + "\"");
                             db.execSQL("insert into '" + send_to + "' values (\"" + username + "\" , \"" + send_to + "\" , \"" + temp + "\" , 1)");
-                            chatlist.add(("You  :  " + temp));
+                            chatlist.add("You  :  " + temp);
                             arrayAdapter.notifyDataSetChanged();
                         }
                     });
@@ -152,18 +154,18 @@ public class chatwin extends ActionBarActivity
 
             });
             socket.connect();
-            Cursor c = db.rawQuery("select * from '" + send_to+"'", null);
+            Cursor c = db.rawQuery("select * from '" + send_to + "'", null);
             String temp;
             while (c.moveToNext())
             {
-               if (c.getString(0).equals(username))
+                if (c.getString(0).equals(username))
                 {
                     temp = "You  :  " + c.getString(2);
 
                 }
                 else
                 {
-                    temp = send_to + "  :  " +c.getString(2);
+                    temp = send_to + "  :  " + c.getString(2);
                 }
                 chatlist.add(temp);
             }
