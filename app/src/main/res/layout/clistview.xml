@@ -6,7 +6,7 @@
                 android:paddingBottom="10dp">
 
     <ImageView
-        android:id="@+id/type"
+        android:id="@+id/imageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/ic_launcher" />
@@ -16,10 +16,10 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="abcde"
-        android:textSize="18dp"
+        android:textSize="16dp"
         android:layout_alignParentTop="true"
-        android:layout_toRightOf="@+id/type"
-        android:layout_toEndOf="@+id/type"
+        android:layout_toEndOf="@+id/imageView"
+        android:layout_toRightOf="@+id/imageView"
         android:layout_marginLeft="10dp"/>
 
     <TextView
@@ -32,5 +32,6 @@
         android:layout_marginTop="5dp"
         android:layout_alignLeft="@+id/text"
         android:layout_alignStart="@+id/text"
-        android:textSize="12dp"/>
+        android:textSize="12sp"
+        android:maxLines="1"/>
     </RelativeLayout>

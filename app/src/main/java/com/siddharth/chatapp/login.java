@@ -1,14 +1,22 @@
 package com.siddharth.chatapp;
 
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.github.nkzawa.emitter.Emitter;
@@ -18,8 +26,13 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.plus.Plus;
+import com.google.android.gms.plus.model.people.Person;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.net.URL;
 
 public class login extends ActionBarActivity implements View.OnClickListener,GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
 {
@@ -32,14 +45,15 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
     /* A flag indicating that a PendingIntent is in progress and prevents
      * us from starting further intents.
      */
-    private Handler handler = new Handler();
 
     private boolean mIntentInProgress;
     private Socket socket;
     public String username = "", password = "";
     public boolean login = false;
     SharedPreferences sharedPref;
+    File file;
     SharedPreferences.Editor editor;
+    Bitmap image = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -176,6 +190,7 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
     //login completed
     private void slogin()
     {
+
         editor.putString("username", username);
         editor.putString("password", password);
         editor.commit();
@@ -208,13 +223,47 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
     public void onConnected(Bundle connectionHint)
     {
         mSignInClicked = false;
+
+        //parse photo url
         String email = Plus.AccountApi.getAccountName(mGoogleApiClient);
-        //.makeText(this, "Welcome " + email, Toast.LENGTH_LONG).show();
+        Person p = Plus.PeopleApi.getCurrentPerson(mGoogleApiClient);
         username = email;
         password = "google+";
-        Object[] o = new Object[2];
+        Person.Image s = p.getImage();
+        String temp = s.getUrl().substring(0, s.getUrl().length() - 2);
+        String temp2 = temp+"50";
+        temp = temp.concat("300");
+        String root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
+
+        //save picture
+        File myDir = new File(root + "/saved_images");
+        myDir.mkdirs();
+        String fname = "Image-" + username + ".png";
+        file = new File(myDir, fname);
+        if (!file.exists())
+        {
+            new LoadImage().execute(temp);
+        }
+        Bitmap myBitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+        ImageView i = (ImageView) findViewById(R.id.imageView);
+        i.setImageBitmap(myBitmap);
+
+
+        //save thumb
+        File myDir2 = new File(root + "/saved_images_thumb");
+        myDir.mkdirs();
+        String fname2 = "Image-" + username + ".png";
+        File file2 = new File(myDir2, fname2);
+        if (!file2.exists())
+        {
+            new LoadImage().execute(temp2);
+        }
+
+        Object[] o = new Object[4];
         o[0] = username;
         o[1] = password;
+        o[2] = temp;
+        o[3] =temp2;
         socket.emit("storeinfo", o);
 
     }
@@ -313,5 +362,62 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
             mGoogleApiClient.connect();
         }*/
         super.onDestroy();
+    }
+
+    //class to download pic async
+    private class LoadImage extends AsyncTask<String, String, Bitmap>
+    {
+        @Override
+        protected void onPreExecute()
+        {
+            super.onPreExecute();
+        }
+
+        protected Bitmap doInBackground(String... args)
+        {
+            Bitmap bitmap = null;
+            try
+            {
+                bitmap = BitmapFactory.decodeStream((InputStream) new URL(args[0]).getContent());
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+            return bitmap;
+        }
+
+        protected void onPostExecute(Bitmap imag)
+        {
+            if (imag != null)
+            {
+                image = imag;
+                try
+                {
+                    FileOutputStream out = new FileOutputStream(file);
+                    imag.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    out.flush();
+                    out.close();
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+                //media scanner
+                MediaScannerConnection.scanFile(getApplicationContext(), new String[]{file.toString()}, null,
+                        new MediaScannerConnection.OnScanCompletedListener()
+                        {
+                            public void onScanCompleted(String path, Uri uri)
+                            {
+                                Log.i("ExternalStorage", "Scanned " + path + ":");
+                                Log.i("ExternalStorage", "-> uri=" + uri);
+                            }
+                        });
+            }
+            else
+            {
+                Log.v("error", "fdfd");
+            }
+        }
     }
 }

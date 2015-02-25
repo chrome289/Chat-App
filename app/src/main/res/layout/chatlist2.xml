@@ -14,11 +14,11 @@
         android:background="#ffb9ff8e"
         android:layout_gravity="left"
         android:padding="10dp"
-        android:layout_weight=".60"/>
+        android:layout_weight=".70"/>
 
     <RelativeLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight=".40"></RelativeLayout>
+        android:layout_weight=".30"></RelativeLayout>
 
 </LinearLayout>

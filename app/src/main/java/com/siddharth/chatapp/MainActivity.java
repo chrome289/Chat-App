@@ -5,9 +5,15 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,17 +26,19 @@ import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 public class MainActivity extends ActionBarActivity
 {
-    public ListView l;
     public listviewadapter arrayAdapter;
     public Socket socket;
     public String username = "", password = "", send_to = "";
     ArrayList<String> friends = new ArrayList<>();
     ArrayList<String> subtext = new ArrayList<>();
+    ArrayList<Bitmap> profilethumb = new ArrayList<>();
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
     SQLiteDatabase db;
@@ -48,8 +56,7 @@ public class MainActivity extends ActionBarActivity
         username = sharedPref.getString("username", "");
         password = sharedPref.getString("password", "");
         ListView l = (ListView) findViewById(R.id.listView);
-        arrayAdapter = new listviewadapter(this, friends,subtext);
-//        l.setDivider(null);
+        arrayAdapter = new listviewadapter(this, friends, subtext, profilethumb);
         l.setAdapter(arrayAdapter);
 
         try
@@ -90,20 +97,56 @@ public class MainActivity extends ActionBarActivity
         {
 
             @Override
-            public void call(Object... args)
+            public void call(Object[] args)
             {
+
+                //Log.v("lo", String.valueOf(args[0]));
+                //convert string thumb to bitmap
                 final String temp = String.valueOf(args[0]);
-                Log.v("lo", temp);
+                byte[] decodedString = Base64.decode(((String) args[1]).trim(), Base64.DEFAULT);
+                Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+
+                //save image to sd card
+                String root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
+                final Bitmap b = decodedByte;
+                File myDir = new File(root + "/saved_images_thumb");
+                myDir.mkdirs();
+                root = "Image-" + temp + ".png";
+                final String name = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString() + "/saved_images_thumb/" + "Image-" + username + ".png";
+                File file = new File(myDir, root);
+                try
+                {
+                    FileOutputStream out = new FileOutputStream(file);
+                    b.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    out.flush();
+                    out.close();
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+                //media scanner
+                MediaScannerConnection.scanFile(getApplicationContext(), new String[]{file.toString()}, null,
+                        new MediaScannerConnection.OnScanCompletedListener()
+                        {
+                            public void onScanCompleted(String path, Uri uri)
+                            {
+                                Log.i("ExternalStorage", "Scanned " + path + ":");
+                                Log.i("ExternalStorage", "-> uri=" + uri);
+                            }
+                        });
                 runOnUiThread(new Runnable()
                 {
                     @Override
                     public void run()
                     {
+                        // add details to database
                         Cursor c = db.rawQuery("select * from user where friend = \"" + temp + "\"", null);
                         String mess = "";
                         if (c.getCount() == 0)
                         {
-                            db.execSQL("insert into user values(\"" + temp + "\",\"Empty\");");
+                            db.execSQL("insert into user values(\"" + temp + "\",\"Empty\",\""+name+"\");");
                         }
                         else
                         {
@@ -111,9 +154,11 @@ public class MainActivity extends ActionBarActivity
                             mess = c.getString(1);
                         }
                         Log.v("Dasda", "sdfsdf");
+                        //update list
                         friends.add(temp);
                         subtext.add(mess);
-                        updatelist();
+                        profilethumb.add(b);
+                        arrayAdapter.notifyDataSetChanged();
                     }
                 });
             }
@@ -136,7 +181,7 @@ public class MainActivity extends ActionBarActivity
         {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id)
             {
-                String temp = (String)(((TextView) view.findViewById(R.id.text)).getText());
+                String temp = (String) (((TextView) view.findViewById(R.id.text)).getText());
                 editor.putString("send_to", temp);
                 editor.commit();
                 openchat();
@@ -148,17 +193,25 @@ public class MainActivity extends ActionBarActivity
     private void intialize()
     {
         db = openOrCreateDatabase("database", Context.MODE_PRIVATE, null);
-        db.execSQL("create table if not exists user('friend' VARCHAR NOT NULL,'lastmessage' varchar);");
+        db.execSQL("create table if not exists user('friend' VARCHAR NOT NULL,'lastmessage' varchar , 'profilethumb' varchar);");
         db.execSQL("create table if not exists localchat('friend1' varchar not null , 'friend2' varchar not null ,'message' varchar);");
+        //update list from the local database
         if (!socket.connected())
         {
             Cursor c = db.rawQuery("select * from user", null);
             while (c.moveToNext())
             {
-                friends.add(c.getString(0) + "\n" + c.getString(1));
-                updatelist();
+                friends.add(c.getString(0));
+                subtext.add(c.getString(1));
+                String name = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()+ "/saved_images_thumb/"+"Image-" + username + ".png";
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inSampleSize = 8;
+                final Bitmap b = BitmapFactory.decodeFile(name, options);
+                profilethumb.add(b);
+                arrayAdapter.notifyDataSetChanged();
             }
         }
+        //use server
         else
         {
             Object[] args = new Object[1];
@@ -167,12 +220,12 @@ public class MainActivity extends ActionBarActivity
         }
     }
 
-    private void updatelist()
+   /* private void updatelist()
     {
 
         arrayAdapter.notifyDataSetChanged();
 //        l.setAdapter(arrayAdapter);
-    }
+    }*/
 
     @Override
 
