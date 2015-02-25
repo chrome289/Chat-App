@@ -5,8 +5,10 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -24,10 +26,11 @@ import java.util.ArrayList;
 public class chatwin extends ActionBarActivity
 {
     public Socket socket;
-    String send_to, username;
+    public String send_to, username,alias;
     SharedPreferences.Editor editor;
     SharedPreferences sharedPref;
     ArrayList<String> chatlist = new ArrayList<>();
+    ArrayList<String> friend1= new ArrayList<>();
     chatlistadapter arrayAdapter;
     SQLiteDatabase db;
 
@@ -38,13 +41,16 @@ public class chatwin extends ActionBarActivity
         setContentView(R.layout.chatwin);
         sharedPref = getSharedPreferences("setting", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
+        alias = sharedPref.getString("alias2", "");
         send_to = sharedPref.getString("send_to", "");
         username = sharedPref.getString("username", "");
         ListView l = (ListView) findViewById(R.id.listView2);
-        arrayAdapter = new chatlistadapter(this, chatlist);
+        arrayAdapter = new chatlistadapter(this, chatlist,friend1);
         l.setDivider(null);
         l.setAdapter(arrayAdapter);
 
+        getSupportActionBar().setTitle(alias);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         try
         {
             socket = IO.socket("http://192.168.1.3:80");
@@ -81,7 +87,8 @@ public class chatwin extends ActionBarActivity
                         {
                             db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
                             db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
-                            chatlist.add(send_to + "  :  " + temp);
+                            chatlist.add(temp);
+                            friend1.add(send_to);
                             arrayAdapter.notifyDataSetChanged();
                         }
                     });
@@ -119,7 +126,8 @@ public class chatwin extends ActionBarActivity
                         {
                             db.execSQL("update user set lastmessage = \"You  :  " + temp + "\" where friend = \"" + send_to + "\"");
                             db.execSQL("insert into '" + send_to + "' values (\"" + username + "\" , \"" + send_to + "\" , \"" + temp + "\" , 1)");
-                            chatlist.add("You  :  " + temp);
+                            chatlist.add(temp);
+                            friend1.add(username);
                             arrayAdapter.notifyDataSetChanged();
                         }
                     });
@@ -160,14 +168,17 @@ public class chatwin extends ActionBarActivity
             {
                 if (c.getString(0).equals(username))
                 {
-                    temp = "You  :  " + c.getString(2);
+                    temp = c.getString(2);
+                    friend1.add(username);
 
                 }
                 else
                 {
-                    temp = send_to + "  :  " + c.getString(2);
+                    temp = c.getString(2);
+                    friend1.add(send_to);
                 }
                 chatlist.add(temp);
+                arrayAdapter.notifyDataSetChanged();
             }
             View tview = null;
             refresh(tview);
@@ -208,5 +219,17 @@ public class chatwin extends ActionBarActivity
         socket.emit("refresh", args[0], args[1]);
         Button b = (Button) findViewById(R.id.button2);
         b.setEnabled(false);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                NavUtils.navigateUpFromSameTask(this);
+                finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

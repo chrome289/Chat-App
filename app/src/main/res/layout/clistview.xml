@@ -20,7 +20,19 @@
         android:layout_alignParentTop="true"
         android:layout_toEndOf="@+id/imageView"
         android:layout_toRightOf="@+id/imageView"
-        android:layout_marginLeft="10dp"/>
+        android:layout_marginLeft="10dp"
+        android:visibility="invisible"/>
+
+    <TextView
+        android:id="@+id/text1"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="abcde"
+        android:textSize="16dp"
+        android:layout_alignParentTop="true"
+        android:layout_above="@+id/subtext"
+        android:layout_alignLeft="@+id/text"
+        android:layout_alignStart="@+id/text"/>
 
     <TextView
         android:id="@+id/subtext"
@@ -28,10 +40,11 @@
         android:layout_height="wrap_content"
         android:text="abcd"
         android:layout_below="@+id/text"
-        android:layout_toEndOf="@+id/type"
         android:layout_marginTop="5dp"
         android:layout_alignLeft="@+id/text"
         android:layout_alignStart="@+id/text"
         android:textSize="12sp"
         android:maxLines="1"/>
+
+    
     </RelativeLayout>

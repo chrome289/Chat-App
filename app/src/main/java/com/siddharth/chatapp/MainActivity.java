@@ -38,6 +38,7 @@ public class MainActivity extends ActionBarActivity
     public String username = "", password = "", send_to = "";
     ArrayList<String> friends = new ArrayList<>();
     ArrayList<String> subtext = new ArrayList<>();
+    ArrayList<String> alias = new ArrayList<>();
     ArrayList<Bitmap> profilethumb = new ArrayList<>();
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
@@ -48,15 +49,19 @@ public class MainActivity extends ActionBarActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        getSupportActionBar().setTitle("Chat App");
         TextView t = (TextView) findViewById(R.id.textView);
         t.setMovementMethod(new ScrollingMovementMethod());
+        friends.clear();
+        subtext.clear();
+        //arrayAdapter.notifyDataSetChanged();
 
         sharedPref = getSharedPreferences("setting", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
         username = sharedPref.getString("username", "");
         password = sharedPref.getString("password", "");
         ListView l = (ListView) findViewById(R.id.listView);
-        arrayAdapter = new listviewadapter(this, friends, subtext, profilethumb);
+        arrayAdapter = new listviewadapter(this, friends, subtext, profilethumb,alias);
         l.setAdapter(arrayAdapter);
 
         try
@@ -103,6 +108,7 @@ public class MainActivity extends ActionBarActivity
                 //Log.v("lo", String.valueOf(args[0]));
                 //convert string thumb to bitmap
                 final String temp = String.valueOf(args[0]);
+                final String temp1 =String.valueOf(args[2]);
                 byte[] decodedString = Base64.decode(((String) args[1]).trim(), Base64.DEFAULT);
                 Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
 
@@ -146,7 +152,7 @@ public class MainActivity extends ActionBarActivity
                         String mess = "";
                         if (c.getCount() == 0)
                         {
-                            db.execSQL("insert into user values(\"" + temp + "\",\"Empty\",\""+name+"\");");
+                            db.execSQL("insert into user values(\"" + temp + "\",\"Empty\",\""+name+"\",\""+temp1+"\");");
                         }
                         else
                         {
@@ -158,6 +164,8 @@ public class MainActivity extends ActionBarActivity
                         friends.add(temp);
                         subtext.add(mess);
                         profilethumb.add(b);
+                        alias.add(temp1);
+                        Log.v("2","nt");
                         arrayAdapter.notifyDataSetChanged();
                     }
                 });
@@ -183,6 +191,8 @@ public class MainActivity extends ActionBarActivity
             {
                 String temp = (String) (((TextView) view.findViewById(R.id.text)).getText());
                 editor.putString("send_to", temp);
+                temp = (String) (((TextView) view.findViewById(R.id.text1)).getText());
+                editor.putString("alias2",temp);
                 editor.commit();
                 openchat();
             }
@@ -192,8 +202,9 @@ public class MainActivity extends ActionBarActivity
 
     private void intialize()
     {
+        Log.v("yu","ck");
         db = openOrCreateDatabase("database", Context.MODE_PRIVATE, null);
-        db.execSQL("create table if not exists user('friend' VARCHAR NOT NULL,'lastmessage' varchar , 'profilethumb' varchar);");
+        db.execSQL("create table if not exists user('friend' VARCHAR NOT NULL,'lastmessage' varchar , 'profilethumb' varchar , 'alias' varchar);");
         db.execSQL("create table if not exists localchat('friend1' varchar not null , 'friend2' varchar not null ,'message' varchar);");
         //update list from the local database
         if (!socket.connected())
@@ -201,12 +212,12 @@ public class MainActivity extends ActionBarActivity
             Cursor c = db.rawQuery("select * from user", null);
             while (c.moveToNext())
             {
+                Log.v("1","cu");
                 friends.add(c.getString(0));
                 subtext.add(c.getString(1));
-                String name = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()+ "/saved_images_thumb/"+"Image-" + username + ".png";
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inSampleSize = 8;
-                final Bitmap b = BitmapFactory.decodeFile(name, options);
+                alias.add(c.getString(3));
+                String name = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()+ "/saved_images_thumb/"+"Image-" + c.getString(0) + ".png";
+                final Bitmap b = BitmapFactory.decodeFile(name);
                 profilethumb.add(b);
                 arrayAdapter.notifyDataSetChanged();
             }

@@ -18,14 +18,16 @@ public class listviewadapter extends BaseAdapter
     ArrayList<String> title;
     ArrayList<String> subtext;
     ArrayList<Bitmap> profilethumb;
+    ArrayList<String> alias;
 
-    public listviewadapter(Activity context, ArrayList<String> title, ArrayList<String> subtext,ArrayList<Bitmap>profilethumb)
+    public listviewadapter(Activity context, ArrayList<String> title, ArrayList<String> subtext,ArrayList<Bitmap>profilethumb,ArrayList<String>alias)
     {
         super();
         this.context = context;
         this.title = title;
         this.subtext = subtext;
         this.profilethumb=profilethumb;
+        this.alias=alias;
     }
 
     public int getCount()
@@ -55,6 +57,8 @@ public class listviewadapter extends BaseAdapter
         aA.setText(title.get(position));
         aA = (TextView) convertView.findViewById(R.id.subtext);
         aA.setText(subtext.get(position));
+        aA = (TextView) convertView.findViewById(R.id.text1);
+        aA.setText(alias.get(position));
         ImageView i=(ImageView)convertView.findViewById(R.id.imageView);
         i.setImageBitmap(profilethumb.get(position));
         return convertView;

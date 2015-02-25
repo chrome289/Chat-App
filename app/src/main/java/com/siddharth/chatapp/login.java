@@ -16,7 +16,8 @@ import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.nkzawa.emitter.Emitter;
@@ -46,9 +47,9 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
      * us from starting further intents.
      */
 
-    private boolean mIntentInProgress;
+    private boolean mIntentInProgress;int a=0,b=0;
     private Socket socket;
-    public String username = "", password = "";
+    public String username = "", password = "",alias="";
     public boolean login = false;
     SharedPreferences sharedPref;
     File file;
@@ -69,9 +70,22 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
             editor.putString("password", "");
         if (!sharedPref.contains("send_to"))
             editor.putString("send_to", "");
+        if (!sharedPref.contains("alias"))
+            editor.putString("alias", "");
+        if (!sharedPref.contains("alias2"))
+            editor.putString("alias2", "");
+        if (!sharedPref.contains("firstuse"))
+            editor.putBoolean("firstuse", true);
 
         editor.commit();
 
+        if(sharedPref.getBoolean("firstuse",true))
+        {
+            TextView t=(TextView)findViewById(R.id.textView2);
+            t.setText("Welcome\n\nSign up using your Google+ Account");
+            RelativeLayout r=(RelativeLayout)findViewById(R.id.loadingPanel);
+            r.setVisibility(View.INVISIBLE);
+        }
         //connecting socket
         try
         {
@@ -159,6 +173,7 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
                         login = false;
                         editor.putString("username", "");
                         editor.putString("password", "");
+                        editor.putString("alias", "");
                         editor.commit();
                         SignInButton btnSignIn = (SignInButton) findViewById(R.id.sign_in);
                         btnSignIn.setEnabled(false);
@@ -190,10 +205,11 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
     //login completed
     private void slogin()
     {
-
         editor.putString("username", username);
         editor.putString("password", password);
+        editor.putString("alias", alias);
         editor.commit();
+        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
         startActivity(new Intent(this, MainActivity.class));
         finish();
     }
@@ -222,17 +238,23 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
     @Override
     public void onConnected(Bundle connectionHint)
     {
+        editor.putBoolean("firstuse", false);
+        editor.commit();
+        TextView t=(TextView)findViewById(R.id.textView2);
+        t.setText("Loading Contacts");
         mSignInClicked = false;
-
         //parse photo url
         String email = Plus.AccountApi.getAccountName(mGoogleApiClient);
         Person p = Plus.PeopleApi.getCurrentPerson(mGoogleApiClient);
         username = email;
         password = "google+";
+        alias=p.getDisplayName();
         Person.Image s = p.getImage();
         String temp = s.getUrl().substring(0, s.getUrl().length() - 2);
-        String temp2 = temp+"50";
+        String temp2 = temp + "50";
         temp = temp.concat("300");
+
+        Log.v(email, temp);
         String root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
 
         //save picture
@@ -240,13 +262,9 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
         myDir.mkdirs();
         String fname = "Image-" + username + ".png";
         file = new File(myDir, fname);
-        if (!file.exists())
-        {
-            new LoadImage().execute(temp);
-        }
-        Bitmap myBitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
-        ImageView i = (ImageView) findViewById(R.id.imageView);
-        i.setImageBitmap(myBitmap);
+        if (!file.exists()) new LoadImage().execute(temp);
+        else
+            b++;
 
 
         //save thumb
@@ -255,17 +273,21 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
         String fname2 = "Image-" + username + ".png";
         File file2 = new File(myDir2, fname2);
         if (!file2.exists())
-        {
             new LoadImage().execute(temp2);
-        }
+        else
+        b++;
 
-        Object[] o = new Object[4];
+
+        Object[] o = new Object[5];
         o[0] = username;
         o[1] = password;
         o[2] = temp;
-        o[3] =temp2;
+        o[3] = temp2;
+        o[4]=alias;
         socket.emit("storeinfo", o);
-
+        Toast.makeText(getApplicationContext(), "Welcome back", Toast.LENGTH_SHORT).show();
+        if(b==2)
+            slogin();
     }
 
     @Override
@@ -349,24 +371,11 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
         }
     }
 
-    @Override
-    public void onDestroy()
-    {
-        //google sign out
-        Log.v("des", "troy");
-        /*if (mGoogleApiClient.isConnected())
-        {
-            Log.v("des", "troy");
-            Plus.AccountApi.clearDefaultAccount(mGoogleApiClient);
-            mGoogleApiClient.disconnect();
-            mGoogleApiClient.connect();
-        }*/
-        super.onDestroy();
-    }
 
     //class to download pic async
     private class LoadImage extends AsyncTask<String, String, Bitmap>
     {
+        File file;
         @Override
         protected void onPreExecute()
         {
@@ -403,21 +412,25 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
                 {
                     e.printStackTrace();
                 }
-                //media scanner
-                MediaScannerConnection.scanFile(getApplicationContext(), new String[]{file.toString()}, null,
-                        new MediaScannerConnection.OnScanCompletedListener()
-                        {
-                            public void onScanCompleted(String path, Uri uri)
-                            {
-                                Log.i("ExternalStorage", "Scanned " + path + ":");
-                                Log.i("ExternalStorage", "-> uri=" + uri);
-                            }
-                        });
+
             }
             else
             {
                 Log.v("error", "fdfd");
             }
+            //media scanner
+            MediaScannerConnection.scanFile(getApplicationContext(), new String[]{file.toString(),}, null,
+                    new MediaScannerConnection.OnScanCompletedListener()
+                    {
+                        public void onScanCompleted(String path, Uri uri)
+                        {
+                            Log.i("ExternalStorage", "Scanned " + path + ":");
+                            Log.i("ExternalStorage", "-> uri=" + uri);
+                        }
+                    });
+            if(a==1)
+                slogin();
+            a++;
         }
     }
 }
