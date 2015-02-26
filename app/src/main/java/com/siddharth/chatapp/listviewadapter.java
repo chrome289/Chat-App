@@ -19,15 +19,18 @@ public class listviewadapter extends BaseAdapter
     ArrayList<String> subtext;
     ArrayList<Bitmap> profilethumb;
     ArrayList<String> alias;
-
-    public listviewadapter(Activity context, ArrayList<String> title, ArrayList<String> subtext,ArrayList<Bitmap>profilethumb,ArrayList<String>alias)
+    ArrayList<Long> unread;
+    ArrayList<Long> pos;
+    public listviewadapter(Activity context, ArrayList<String> title, ArrayList<String> subtext, ArrayList<Bitmap> profilethumb, ArrayList<String> alias, ArrayList<Long> unread,ArrayList<Long>pos)
     {
         super();
         this.context = context;
         this.title = title;
         this.subtext = subtext;
-        this.profilethumb=profilethumb;
-        this.alias=alias;
+        this.profilethumb = profilethumb;
+        this.alias = alias;
+        this.unread = unread;
+        this.pos=pos;
     }
 
     public int getCount()
@@ -59,7 +62,13 @@ public class listviewadapter extends BaseAdapter
         aA.setText(subtext.get(position));
         aA = (TextView) convertView.findViewById(R.id.text1);
         aA.setText(alias.get(position));
-        ImageView i=(ImageView)convertView.findViewById(R.id.imageView);
+        aA = (TextView) convertView.findViewById(R.id.textView3);
+        aA.setText(String.valueOf(unread.get(position)));
+        if (unread.get(position) > 0)
+            aA.setVisibility(View.VISIBLE);
+        else
+            aA.setVisibility(View.INVISIBLE);
+        ImageView i = (ImageView) convertView.findViewById(R.id.imageView);
         i.setImageBitmap(profilethumb.get(position));
         return convertView;
     }

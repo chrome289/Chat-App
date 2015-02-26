@@ -60,8 +60,6 @@ public class chatwin extends ActionBarActivity
             e.printStackTrace();
         }
         db = openOrCreateDatabase("database", Context.MODE_PRIVATE, null);
-        db.execSQL("create table if not exists '" + send_to + "'('friend1' varchar not null , 'friend2' varchar not null ,'message' varchar,'delivered' integer);");
-
         if (socket != null)
         {
             socket.on(Socket.EVENT_CONNECT, new Emitter.Listener()

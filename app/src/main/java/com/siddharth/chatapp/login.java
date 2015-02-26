@@ -47,9 +47,10 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
      * us from starting further intents.
      */
 
-    private boolean mIntentInProgress;int a=0,b=0;
+    private boolean mIntentInProgress;
+    int a = 0, b = 0;
     private Socket socket;
-    public String username = "", password = "",alias="";
+    public String username = "", password = "", alias = "";
     public boolean login = false;
     SharedPreferences sharedPref;
     File file;
@@ -79,11 +80,11 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
 
         editor.commit();
 
-        if(sharedPref.getBoolean("firstuse",true))
+        if (sharedPref.getBoolean("firstuse", true))
         {
-            TextView t=(TextView)findViewById(R.id.textView2);
-            t.setText("Welcome\n\nSign up using your Google+ Account");
-            RelativeLayout r=(RelativeLayout)findViewById(R.id.loadingPanel);
+            TextView t = (TextView) findViewById(R.id.textView2);
+            t.setText("Welcome\n\nSign up using your Google Account");
+            RelativeLayout r = (RelativeLayout) findViewById(R.id.loadingPanel);
             r.setVisibility(View.INVISIBLE);
         }
         //connecting socket
@@ -151,7 +152,7 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
                     public void run()
                     {
                         login = true;
-                        slogin();
+                        //slogin();
                         Toast.makeText(getApplicationContext(), temp, Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -240,15 +241,18 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
     {
         editor.putBoolean("firstuse", false);
         editor.commit();
-        TextView t=(TextView)findViewById(R.id.textView2);
+        TextView t = (TextView) findViewById(R.id.textView2);
         t.setText("Loading Contacts");
+        RelativeLayout r = (RelativeLayout) findViewById(R.id.loadingPanel);
+        r.setVisibility(View.VISIBLE);
+
         mSignInClicked = false;
         //parse photo url
         String email = Plus.AccountApi.getAccountName(mGoogleApiClient);
         Person p = Plus.PeopleApi.getCurrentPerson(mGoogleApiClient);
         username = email;
         password = "google+";
-        alias=p.getDisplayName();
+        alias = p.getDisplayName();
         Person.Image s = p.getImage();
         String temp = s.getUrl().substring(0, s.getUrl().length() - 2);
         String temp2 = temp + "50";
@@ -275,7 +279,7 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
         if (!file2.exists())
             new LoadImage().execute(temp2);
         else
-        b++;
+            b++;
 
 
         Object[] o = new Object[5];
@@ -283,10 +287,10 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
         o[1] = password;
         o[2] = temp;
         o[3] = temp2;
-        o[4]=alias;
+        o[4] = alias;
         socket.emit("storeinfo", o);
         Toast.makeText(getApplicationContext(), "Welcome back", Toast.LENGTH_SHORT).show();
-        if(b==2)
+        if (b == 2)
             slogin();
     }
 
@@ -376,6 +380,7 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
     private class LoadImage extends AsyncTask<String, String, Bitmap>
     {
         File file;
+
         @Override
         protected void onPreExecute()
         {
@@ -418,8 +423,9 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
             {
                 Log.v("error", "fdfd");
             }
+try{
             //media scanner
-            MediaScannerConnection.scanFile(getApplicationContext(), new String[]{file.toString(),}, null,
+            MediaScannerConnection.scanFile(getApplicationContext(), new String[]{file.toString()}, null,
                     new MediaScannerConnection.OnScanCompletedListener()
                     {
                         public void onScanCompleted(String path, Uri uri)
@@ -427,8 +433,10 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
                             Log.i("ExternalStorage", "Scanned " + path + ":");
                             Log.i("ExternalStorage", "-> uri=" + uri);
                         }
-                    });
-            if(a==1)
+                    });}
+catch(Exception e)
+{}
+            if (a == 1)
                 slogin();
             a++;
         }
