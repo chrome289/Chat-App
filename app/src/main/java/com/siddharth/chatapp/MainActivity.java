@@ -64,6 +64,8 @@ public class MainActivity extends ActionBarActivity
         editor = sharedPref.edit();
         username = sharedPref.getString("username", "");
         password = sharedPref.getString("password", "");
+        editor.putBoolean("handleit",false);
+        editor.commit();
         ListView l = (ListView) findViewById(R.id.listView);
         arrayAdapter = new listviewadapter(this, friends, subtext, profilethumb, alias,unread,pos);
         l.setAdapter(arrayAdapter);
@@ -84,7 +86,7 @@ public class MainActivity extends ActionBarActivity
                 Log.v("con", "nected");
             }
 
-        }).on("messaged", new Emitter.Listener()
+        }).on("messaged2", new Emitter.Listener()
         {
 
             @Override
@@ -92,25 +94,29 @@ public class MainActivity extends ActionBarActivity
             {
                 final String temp = String.valueOf(args[0]);
                 send_to= (String) args[1];
-                Log.v("lo", temp);
+                Log.v("say", "1");
                 runOnUiThread(new Runnable()
                 {
                     @Override
                     public void run()
                     {
-                        db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
-                        db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
-                        Toast.makeText(getApplicationContext(), "recieved", Toast.LENGTH_SHORT);
-                        int x;
-                        Log.v("fdf", String.valueOf(friends.size()));
-                        for(x=0;x<friends.size();x++)
+                        Log.v("sgfg", String.valueOf(sharedPref.getBoolean("handleit",false)));
+                        if(!sharedPref.getBoolean("handleit",false))
                         {
-                            if(friends.get(x).equals(send_to))
-                            break;
+                            db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
+                            db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
+                            Toast.makeText(getApplicationContext(), "recieved", Toast.LENGTH_SHORT);
+                            int x;
+                            Log.v("fdf", String.valueOf(friends.size()));
+                            for (x = 0; x < friends.size(); x++)
+                            {
+                                if (friends.get(x).equals(send_to))
+                                    break;
+                            }
+                            subtext.set(x, send_to + "  :  " + temp);
+                            unread.set(x, unread.get(x) + 1);
+                            arrayAdapter.notifyDataSetChanged();
                         }
-                        subtext.set(x, send_to + "  :  " + temp);
-                        unread.set(x,unread.get(x)+1);
-                        arrayAdapter.notifyDataSetChanged();
                     }
                 });
             }
@@ -277,6 +283,8 @@ public class MainActivity extends ActionBarActivity
 
     private void openchat()
     {
+        editor.putBoolean("handleit",true);
+        editor.commit();
         startActivity(new Intent(this, chatwin.class));
     }
 
@@ -298,4 +306,5 @@ public class MainActivity extends ActionBarActivity
         intialize();
         super.onResume();
     }
+
 }

@@ -26,11 +26,11 @@ import java.util.ArrayList;
 public class chatwin extends ActionBarActivity
 {
     public Socket socket;
-    public String send_to, username,alias;
+    public String send_to, username, alias;
     SharedPreferences.Editor editor;
     SharedPreferences sharedPref;
     ArrayList<String> chatlist = new ArrayList<>();
-    ArrayList<String> friend1= new ArrayList<>();
+    ArrayList<String> friend1 = new ArrayList<>();
     chatlistadapter arrayAdapter;
     SQLiteDatabase db;
 
@@ -45,7 +45,7 @@ public class chatwin extends ActionBarActivity
         send_to = sharedPref.getString("send_to", "");
         username = sharedPref.getString("username", "");
         ListView l = (ListView) findViewById(R.id.listView2);
-        arrayAdapter = new chatlistadapter(this, chatlist,friend1);
+        arrayAdapter = new chatlistadapter(this, chatlist, friend1);
         l.setDivider(null);
         l.setAdapter(arrayAdapter);
 
@@ -70,24 +70,27 @@ public class chatwin extends ActionBarActivity
                     Log.v("con", "nected");
                 }
 
-            }).on("messaged", new Emitter.Listener()
+            }).on("messaged2", new Emitter.Listener()
             {
 
                 @Override
-                public void call(Object[]args)
+                public void call(Object[] args)
                 {
                     final String temp = String.valueOf(args[0]);
-                    Log.v("lo", temp);
+                    Log.v("say", "2");
                     runOnUiThread(new Runnable()
                     {
                         @Override
                         public void run()
                         {
-                            db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
-                            db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
-                            chatlist.add(temp);
-                            friend1.add(send_to);
-                            arrayAdapter.notifyDataSetChanged();
+                            if (sharedPref.getBoolean("handleit", false))
+                            {
+                                db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
+                                db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
+                                chatlist.add(temp);
+                                friend1.add(send_to);
+                                arrayAdapter.notifyDataSetChanged();
+                            }
                         }
                     });
                 }
@@ -211,6 +214,8 @@ public class chatwin extends ActionBarActivity
     //refresh chat history
     public void refresh(View view)
     {
+
+        Log.v("say", "3");
         Object[] args = new Object[2];
         args[0] = username;
         args[1] = send_to;
@@ -220,14 +225,27 @@ public class chatwin extends ActionBarActivity
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        switch (item.getItemId())
+        {
             // Respond to the action bar's Up/Home button
             case android.R.id.home:
                 NavUtils.navigateUpFromSameTask(this);
+                editor.putBoolean("handleit", false);
+                editor.commit();
                 finish();
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        editor.putBoolean("handleit", false);
+        editor.commit();
+        finish();
+        finish();
     }
 }

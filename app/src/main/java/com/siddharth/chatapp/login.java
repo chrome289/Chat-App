@@ -25,9 +25,13 @@ import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
+import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.plus.People;
 import com.google.android.gms.plus.Plus;
 import com.google.android.gms.plus.model.people.Person;
+import com.google.android.gms.plus.model.people.PersonBuffer;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,7 +39,7 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-public class login extends ActionBarActivity implements View.OnClickListener,GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
+public class login extends ActionBarActivity implements View.OnClickListener,GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, ResultCallback<People.LoadPeopleResult>
 {
     /* Request code used to invoke sign in user interactions. */
     private static final int RC_SIGN_IN = 0;
@@ -46,11 +50,12 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
     /* A flag indicating that a PendingIntent is in progress and prevents
      * us from starting further intents.
      */
-
+    Handler h = new Handler();
+    String fri = "";
     private boolean mIntentInProgress;
     int a = 0, b = 0;
     private Socket socket;
-    public String username = "", password = "", alias = "";
+    public String username = "", password = "", alias = "", email = "";
     public boolean login = false;
     SharedPreferences sharedPref;
     File file;
@@ -77,6 +82,8 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
             editor.putString("alias2", "");
         if (!sharedPref.contains("firstuse"))
             editor.putBoolean("firstuse", true);
+        if (!sharedPref.contains("handleit"))
+            editor.putBoolean("handleit", false);
 
         editor.commit();
 
@@ -138,6 +145,26 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
                 });
             }
 
+        }).on("listupdated", new Emitter.Listener()
+        {
+
+            @Override
+            public void call(Object... args)
+            {
+
+                runOnUiThread(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        login = true;
+                        Log.v("fri", "ends");
+                        Toast.makeText(getApplicationContext(), "All set", Toast.LENGTH_SHORT).show();
+                        slogin();
+                    }
+                });
+            }
+
         }).on("login", new Emitter.Listener()
         {
 
@@ -153,6 +180,11 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
                     {
                         login = true;
                         //slogin();
+                        Object[] t = new Object[2];
+                        t[0] = username;
+                        t[1] = fri;
+                        Log.v("sds", fri);
+                        socket.emit("checkuserexist", t);
                         Toast.makeText(getApplicationContext(), temp, Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -203,17 +235,28 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
         });
     }
 
-    //login completed
     private void slogin()
     {
-        editor.putString("username", username);
-        editor.putString("password", password);
-        editor.putString("alias", alias);
-        editor.commit();
-        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-        startActivity(new Intent(this, MainActivity.class));
-        finish();
+        h.postDelayed(new Runnable()
+        {
+            public void run()
+            {
+                if (a == 2)
+                {
+                    Log.v("hiui", String.valueOf(a));
+                    editor.putString("username", username);
+                    editor.putString("password", password);
+                    editor.putString("alias", alias);
+                    editor.commit();
+                    findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+                    startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                    finish();
+                }
+                else h.postDelayed(this, 1000);
+            }
+        }, 3000);
     }
+
 
     //google client start
     protected void onStart()
@@ -248,9 +291,9 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
 
         mSignInClicked = false;
         //parse photo url
-        String email = Plus.AccountApi.getAccountName(mGoogleApiClient);
+        email = Plus.AccountApi.getAccountName(mGoogleApiClient);
         Person p = Plus.PeopleApi.getCurrentPerson(mGoogleApiClient);
-        username = email;
+        username = p.getId();
         password = "google+";
         alias = p.getDisplayName();
         Person.Image s = p.getImage();
@@ -258,40 +301,41 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
         String temp2 = temp + "50";
         temp = temp.concat("300");
 
-        Log.v(email, temp);
+        Log.v(username, temp);
         String root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
+
+        Plus.PeopleApi.loadVisible(mGoogleApiClient, null).setResultCallback(this);
 
         //save picture
         File myDir = new File(root + "/saved_images");
         myDir.mkdirs();
-        String fname = "Image-" + username + ".png";
+        String fname = "Image-" + email + ".png";
         file = new File(myDir, fname);
         if (!file.exists()) new LoadImage().execute(temp);
         else
-            b++;
+            a++;
 
 
         //save thumb
         File myDir2 = new File(root + "/saved_images_thumb");
         myDir.mkdirs();
-        String fname2 = "Image-" + username + ".png";
+        String fname2 = "Image-" + email + ".png";
         File file2 = new File(myDir2, fname2);
         if (!file2.exists())
             new LoadImage().execute(temp2);
         else
-            b++;
+            a++;
 
 
-        Object[] o = new Object[5];
+        Object[] o = new Object[6];
         o[0] = username;
         o[1] = password;
         o[2] = temp;
         o[3] = temp2;
         o[4] = alias;
+        o[5] = email;
         socket.emit("storeinfo", o);
         Toast.makeText(getApplicationContext(), "Welcome back", Toast.LENGTH_SHORT).show();
-        if (b == 2)
-            slogin();
     }
 
     @Override
@@ -375,6 +419,31 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
         }
     }
 
+    @Override
+    public void onResult(People.LoadPeopleResult peopleData)
+    {
+        if (peopleData.getStatus().getStatusCode() == CommonStatusCodes.SUCCESS)
+        {
+            PersonBuffer personBuffer = peopleData.getPersonBuffer();
+            try
+            {
+                int count = personBuffer.getCount();
+                for (int i = 0; i < count; i++)
+                {
+                    fri = fri + personBuffer.get(i).getId().toString() + ",";
+                }
+            }
+            finally
+            {
+                personBuffer.close();
+            }
+        }
+        else
+        {
+            Log.e("TAG", "Error requesting visible circles: " + peopleData.getStatus());
+        }
+    }
+
 
     //class to download pic async
     private class LoadImage extends AsyncTask<String, String, Bitmap>
@@ -423,21 +492,22 @@ public class login extends ActionBarActivity implements View.OnClickListener,Goo
             {
                 Log.v("error", "fdfd");
             }
-try{
-            //media scanner
-            MediaScannerConnection.scanFile(getApplicationContext(), new String[]{file.toString()}, null,
-                    new MediaScannerConnection.OnScanCompletedListener()
-                    {
-                        public void onScanCompleted(String path, Uri uri)
+            try
+            {
+                //media scanner
+                MediaScannerConnection.scanFile(getApplicationContext(), new String[]{file.toString()}, null,
+                        new MediaScannerConnection.OnScanCompletedListener()
                         {
-                            Log.i("ExternalStorage", "Scanned " + path + ":");
-                            Log.i("ExternalStorage", "-> uri=" + uri);
-                        }
-                    });}
-catch(Exception e)
-{}
-            if (a == 1)
-                slogin();
+                            public void onScanCompleted(String path, Uri uri)
+                            {
+                                Log.i("ExternalStorage", "Scanned " + path + ":");
+                                Log.i("ExternalStorage", "-> uri=" + uri);
+                            }
+                        });
+            }
+            catch (Exception e)
+            {
+            }
             a++;
         }
     }
