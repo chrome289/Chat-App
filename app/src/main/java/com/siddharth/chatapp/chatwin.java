@@ -53,7 +53,7 @@ public class chatwin extends ActionBarActivity
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         try
         {
-            socket = IO.socket("http://192.168.1.3:80");
+            socket = IO.socket("http://192.168.1.101:80");
         }
         catch (URISyntaxException e)
         {
@@ -77,14 +77,14 @@ public class chatwin extends ActionBarActivity
                 public void call(Object[] args)
                 {
                     final String temp = String.valueOf(args[0]);
-                    Log.v("say", "2");
                     runOnUiThread(new Runnable()
                     {
                         @Override
                         public void run()
                         {
                             if (sharedPref.getBoolean("handleit", false))
-                            {
+                            {Log.v("say", "2");
+
                                 db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
                                 db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
                                 chatlist.add(temp);
@@ -107,7 +107,7 @@ public class chatwin extends ActionBarActivity
                         @Override
                         public void run()
                         {
-                            Toast toast = Toast.makeText(getApplicationContext(), "Message not sent", Toast.LENGTH_SHORT);
+                            Toast.makeText(getApplicationContext(), send_to+" has not added you as friends", Toast.LENGTH_SHORT);
                         }
                     });
                 }
@@ -243,9 +243,9 @@ public class chatwin extends ActionBarActivity
     @Override
     public void onBackPressed()
     {
+        Log.v("im", "finished");
         editor.putBoolean("handleit", false);
         editor.commit();
-        finish();
         finish();
     }
 }

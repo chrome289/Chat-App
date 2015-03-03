@@ -42,7 +42,7 @@ public class MainActivity extends ActionBarActivity
     ArrayList<String> alias = new ArrayList<>();
     ArrayList<Bitmap> profilethumb = new ArrayList<>();
     ArrayList<Long> unread = new ArrayList<>();
-    ArrayList<Long> pos=new ArrayList<>();
+    ArrayList<Long> pos = new ArrayList<>();
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
     SQLiteDatabase db;
@@ -64,15 +64,15 @@ public class MainActivity extends ActionBarActivity
         editor = sharedPref.edit();
         username = sharedPref.getString("username", "");
         password = sharedPref.getString("password", "");
-        editor.putBoolean("handleit",false);
+        editor.putBoolean("handleit", false);
         editor.commit();
         ListView l = (ListView) findViewById(R.id.listView);
-        arrayAdapter = new listviewadapter(this, friends, subtext, profilethumb, alias,unread,pos);
+        arrayAdapter = new listviewadapter(this, friends, subtext, profilethumb, alias, unread, pos);
         l.setAdapter(arrayAdapter);
 
         try
         {
-            socket = IO.socket("http://192.168.1.3:80");
+            socket = IO.socket("http://192.168.1.101:80");
         }
         catch (URISyntaxException e)
         {
@@ -90,24 +90,24 @@ public class MainActivity extends ActionBarActivity
         {
 
             @Override
-            public void call(Object[]args)
+            public void call(Object[] args)
             {
                 final String temp = String.valueOf(args[0]);
-                send_to= (String) args[1];
+                send_to = (String) args[1];
                 Log.v("say", "1");
                 runOnUiThread(new Runnable()
                 {
                     @Override
                     public void run()
                     {
-                        Log.v("sgfg", String.valueOf(sharedPref.getBoolean("handleit",false)));
-                        if(!sharedPref.getBoolean("handleit",false))
+                        //Log.v("sgfg", String.valueOf(sharedPref.getBoolean("handleit",false)));
+                        if (!sharedPref.getBoolean("handleit", false))
                         {
                             db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
                             db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
                             Toast.makeText(getApplicationContext(), "recieved", Toast.LENGTH_SHORT);
                             int x;
-                            Log.v("fdf", String.valueOf(friends.size()));
+                            //Log.v("fdf", String.valueOf(friends.size()));
                             for (x = 0; x < friends.size(); x++)
                             {
                                 if (friends.get(x).equals(send_to))
@@ -283,9 +283,10 @@ public class MainActivity extends ActionBarActivity
 
     private void openchat()
     {
-        editor.putBoolean("handleit",true);
+        editor.putBoolean("handleit", true);
         editor.commit();
         startActivity(new Intent(this, chatwin.class));
+        //finish();
     }
 
     @Override
@@ -306,5 +307,4 @@ public class MainActivity extends ActionBarActivity
         intialize();
         super.onResume();
     }
-
 }

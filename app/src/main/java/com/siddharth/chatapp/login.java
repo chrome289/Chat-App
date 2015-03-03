@@ -35,7 +35,8 @@ public class login extends ActionBarActivity
             editor.putBoolean("firstuse", true);
         if (!sharedPref.contains("handleit"))
             editor.putBoolean("handleit", false);
-
+        if (!sharedPref.contains("remember"))
+            editor.putBoolean("remember", false);
         editor.commit();
 
         if (sharedPref.getBoolean("firstuse", true))

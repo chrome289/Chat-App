@@ -1,6 +1,7 @@
 package com.siddharth.chatapp;
 
 import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,13 +12,13 @@ import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 
 import com.github.nkzawa.emitter.Emitter;
@@ -33,11 +34,9 @@ import java.net.URL;
 
 public class clogin extends Fragment implements View.OnClickListener
 {
-    private Handler h = new Handler();
     private Socket socket;
     String username = "8435013374", password = "1", fri = "", alias = "", email = "";
     public boolean login = false;
-    File file;
     int a = 0, b = 0;
     Bitmap image;
 
@@ -52,9 +51,18 @@ public class clogin extends Fragment implements View.OnClickListener
         sharedPref = getActivity().getSharedPreferences("setting", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
         b.setOnClickListener(this);
+        b = (Button) v.findViewById(R.id.button4);
+        b.setOnClickListener(this);
+        CheckBox c = (CheckBox) v.findViewById(R.id.checkBox);
+        c.setOnClickListener(this);
+        if (c.isChecked())
+            editor.putBoolean("remember", true);
+        else
+            editor.putBoolean("remember", false);
+
         try
         {
-            socket = IO.socket("http://192.168.1.3:80");
+            socket = IO.socket("http://192.168.1.101:80");
         }
         catch (URISyntaxException e)
         {
@@ -143,6 +151,13 @@ public class clogin extends Fragment implements View.OnClickListener
 
         });
         socket.connect();
+        if (sharedPref.getBoolean("remember", false))
+        {
+            Object[] o = new Object[2];
+            o[0] = sharedPref.getString("username", "");
+            o[1] = sharedPref.getString("password", "");
+            socket.emit("login", o[0], o[1]);
+        }
         return v;
     }
 
@@ -157,13 +172,47 @@ public class clogin extends Fragment implements View.OnClickListener
                 username = String.valueOf(e.getText());
                 e = (EditText) getView().findViewById(R.id.editText3);
                 password = String.valueOf(e.getText());
-                username = "8435013374";
-                password = "1";
+                //username = "8435013374";
+                //password = "1";
                 Object[] o = new Object[2];
-                o[0] = username;
-                o[1] = password;
+
+                if (sharedPref.getBoolean("remember", false))
+                {
+                    if (username.length() == 0)
+                    {
+                        o[0] = sharedPref.getString("username", "");
+                        o[1] = sharedPref.getString("password", "");
+                    }
+                    else
+                    {
+                        o[0] = username;
+                        o[1] = password;
+                        editor.putString("username", username);
+                        editor.putString("password", password);
+                    }
+                }
+                else
+                {
+                    o[0] = username;
+                    o[1] = password;
+                    editor.putString("username", username);
+                    editor.putString("password", password);
+                }
                 socket.emit("login", o[0], o[1]);
                 break;
+            case R.id.button4:
+                csignup newFragment = new csignup();
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                ft.replace(R.id.content_frame, newFragment, "csignup");
+                ft.commit();
+                getFragmentManager().executePendingTransactions();
+                break;
+            case R.id.checkBox:
+                CheckBox c = (CheckBox) getView().findViewById(R.id.checkBox);
+                if (c.isChecked())
+                    editor.putBoolean("remember", true);
+                else
+                    editor.putBoolean("remember", false);
         }
     }
 
@@ -179,7 +228,11 @@ public class clogin extends Fragment implements View.OnClickListener
             cursor.moveToFirst();
             do
             {
-                fri = cursor.getString(phoneNumberIdx) + "," + fri;
+                String temp = cursor.getString(phoneNumberIdx), temp2 = "";
+                temp2 = temp.replaceAll("\\D+", "");
+                if (temp2.length() != 10)
+                    temp2 = temp2.substring(temp2.length() - 10);
+                fri = temp2 + "," + fri;
             }
             while (cursor.moveToNext());
         }
