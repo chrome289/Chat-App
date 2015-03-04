@@ -151,13 +151,13 @@ public class clogin extends Fragment implements View.OnClickListener
 
         });
         socket.connect();
-        if (sharedPref.getBoolean("remember", false))
+        /*if (sharedPref.getBoolean("remember", false))
         {
             Object[] o = new Object[2];
             o[0] = sharedPref.getString("username", "");
             o[1] = sharedPref.getString("password", "");
             socket.emit("login", o[0], o[1]);
-        }
+        }*/
         return v;
     }
 
