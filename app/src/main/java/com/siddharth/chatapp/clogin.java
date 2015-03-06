@@ -20,6 +20,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
@@ -34,10 +36,11 @@ import java.net.URL;
 
 public class clogin extends Fragment implements View.OnClickListener
 {
+    private android.os.Handler handler = new android.os.Handler();
     private Socket socket;
     String username = "8435013374", password = "1", fri = "", alias = "", email = "";
     public boolean login = false;
-    int a = 0, b = 0;
+    int a = 0, c = 0;
     Bitmap image;
 
     SharedPreferences sharedPref;
@@ -83,7 +86,14 @@ public class clogin extends Fragment implements View.OnClickListener
             {
                 final String temp = String.valueOf(args[0]) + "\n";
                 Log.v("lo", temp);
-                //Toast.makeText(getActivity().getApplicationContext(), temp, Toast.LENGTH_SHORT).show();
+                getActivity().runOnUiThread(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        Toast.makeText(getActivity().getApplicationContext(), temp, Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         }).on("listupdated", new Emitter.Listener()
         {
@@ -91,10 +101,17 @@ public class clogin extends Fragment implements View.OnClickListener
             @Override
             public void call(Object... args)
             {
-                login = true;
-                Log.v("fri", "ends");
-                //Toast.makeText(getActivity().getApplicationContext(), "All set", Toast.LENGTH_SHORT).show();
-                slogin();
+                getActivity().runOnUiThread(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        login = true;
+                        Log.v("fri", "ends");
+                        Toast.makeText(getActivity().getApplicationContext(), "All set", Toast.LENGTH_SHORT).show();
+                        slogin();
+                    }
+                });
             }
 
         }).on("login", new Emitter.Listener()
@@ -103,14 +120,27 @@ public class clogin extends Fragment implements View.OnClickListener
             public void call(Object... args)
             {
                 final String temp = String.valueOf(args[0]) + "\n";
-                login = true;
-                get_contacts();
-                Object[] t = new Object[2];
-                t[0] = username;
-                t[1] = fri;
-                Log.v("sds", "fri");
-                socket.emit("checkuserexist", t);
-                //Toast.makeText(getActivity().getApplicationContext(), temp, Toast.LENGTH_SHORT).show();
+                getActivity().runOnUiThread(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        login = true;
+                        get_contacts();
+                        Object[] t = new Object[2];
+                        t[0] = username;
+                        t[1] = fri;
+                        Log.v("sds", "fri");
+                        socket.emit("checkuserexist", t);
+                        CheckBox c = (CheckBox) getView().findViewById(R.id.checkBox);
+                        if (c.isChecked())
+                            editor.putBoolean("remember", true);
+                        else
+                            editor.putBoolean("remember", false);
+                        editor.commit();
+                        Toast.makeText(getActivity().getApplicationContext(), temp, Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
 
         }).on("ready", new Emitter.Listener()
@@ -132,13 +162,27 @@ public class clogin extends Fragment implements View.OnClickListener
             public void call(Object... args)
             {
                 final String temp = String.valueOf(args[0]) + "\n";
-                Log.v("lo", temp);
-                login = false;
-                editor.putString("username", "");
-                editor.putString("password", "");
-                editor.putString("alias", "");
-                editor.commit();
-                //Toast.makeText(getActivity().getApplicationContext(), temp, Toast.LENGTH_SHORT).show();
+                getActivity().runOnUiThread(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        Log.v("lo", temp);
+                        login = false;
+                        editor.putString("username", "");
+                        editor.putString("password", "");
+                        editor.putString("alias", "");
+                        editor.putBoolean("remember", false);
+                        editor.commit();
+                        Button b = (Button) getView().findViewById(R.id.button3);
+                        b.setEnabled(true);
+                        b = (Button) getView().findViewById(R.id.button4);
+                        b.setEnabled(true);
+                        ProgressBar p = (ProgressBar) getView().findViewById(R.id.pb);
+                        p.setVisibility(View.INVISIBLE);
+                        Toast.makeText(getActivity().getApplicationContext(), temp, Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener()
         {
@@ -151,13 +195,13 @@ public class clogin extends Fragment implements View.OnClickListener
 
         });
         socket.connect();
-        /*if (sharedPref.getBoolean("remember", false))
+        if (sharedPref.getBoolean("remember", false))
         {
             Object[] o = new Object[2];
             o[0] = sharedPref.getString("username", "");
             o[1] = sharedPref.getString("password", "");
             socket.emit("login", o[0], o[1]);
-        }*/
+        }
         return v;
     }
 
@@ -167,21 +211,29 @@ public class clogin extends Fragment implements View.OnClickListener
         switch (v.getId())
         {
             case R.id.button3:
-                Log.v("howdy", "ihyihih");
                 EditText e = (EditText) getView().findViewById(R.id.editText2);
                 username = String.valueOf(e.getText());
                 e = (EditText) getView().findViewById(R.id.editText3);
                 password = String.valueOf(e.getText());
+                Button b = (Button) getView().findViewById(R.id.button3);
+                b.setEnabled(false);
+                b = (Button) getView().findViewById(R.id.button4);
+                b.setEnabled(false);
+                ProgressBar p = (ProgressBar) getView().findViewById(R.id.pb);
+                p.setVisibility(View.VISIBLE);
                 //username = "8435013374";
                 //password = "1";
                 Object[] o = new Object[2];
 
                 if (sharedPref.getBoolean("remember", false))
                 {
-                    if (username.length() == 0)
+                    Log.v("howdy", "ihyihih");
+
+                    if (username.length() == 0 || password.length() == 0)
                     {
                         o[0] = sharedPref.getString("username", "");
                         o[1] = sharedPref.getString("password", "");
+                        Toast.makeText(getActivity().getApplicationContext(), "Wrong Credentials", Toast.LENGTH_SHORT).show();
                     }
                     else
                     {
@@ -189,6 +241,7 @@ public class clogin extends Fragment implements View.OnClickListener
                         o[1] = password;
                         editor.putString("username", username);
                         editor.putString("password", password);
+                        socket.emit("login", o[0], o[1]);
                     }
                 }
                 else
@@ -197,8 +250,8 @@ public class clogin extends Fragment implements View.OnClickListener
                     o[1] = password;
                     editor.putString("username", username);
                     editor.putString("password", password);
+                    socket.emit("login", o[0], o[1]);
                 }
-                socket.emit("login", o[0], o[1]);
                 break;
             case R.id.button4:
                 csignup newFragment = new csignup();
@@ -213,6 +266,8 @@ public class clogin extends Fragment implements View.OnClickListener
                     editor.putBoolean("remember", true);
                 else
                     editor.putBoolean("remember", false);
+                editor.commit();
+                break;
         }
     }
 
@@ -239,6 +294,7 @@ public class clogin extends Fragment implements View.OnClickListener
         catch (Exception e)
         {
             e.printStackTrace();
+            Log.v("here", "1");
         }
         finally
         {
@@ -247,7 +303,7 @@ public class clogin extends Fragment implements View.OnClickListener
                 cursor.close();
             }
         }
-        b = 1;
+        c = 1;
     }
 
     //class to download pic async
@@ -271,6 +327,7 @@ public class clogin extends Fragment implements View.OnClickListener
             catch (Exception e)
             {
                 e.printStackTrace();
+                Log.v("here", "2");
             }
             return bitmap;
         }
@@ -290,6 +347,7 @@ public class clogin extends Fragment implements View.OnClickListener
                 catch (Exception e)
                 {
                     e.printStackTrace();
+                    Log.v("here", "3");
                 }
 
             }
@@ -312,6 +370,7 @@ public class clogin extends Fragment implements View.OnClickListener
             }
             catch (Exception e)
             {
+                Log.v("here", "4");
             }
             a++;
         }
@@ -326,18 +385,33 @@ public class clogin extends Fragment implements View.OnClickListener
         o[3] = email;
         socket.emit("storeinfo", o);
         a = 2;
-
-        if (a == 2 && b == 1)
+        getActivity().runOnUiThread(new Runnable()
         {
-//            Toast.makeText(getActivity().getApplicationContext(), "Welcome back", Toast.LENGTH_SHORT).show();
-            Log.v("hiui", String.valueOf(a));
-            editor.putString("username", username);
-            editor.putString("password", password);
-            editor.putString("alias", alias);
-            editor.commit();
-            //findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-            startActivity(new Intent(getActivity().getApplicationContext(), MainActivity.class));
-            getActivity().finish();
-        }
+            @Override
+            public void run()
+            {
+                Runnable r = new Runnable()
+                {
+                    public void run()
+                    {
+                        if (a == 2 && c == 1)
+                        {
+//                          Toast.makeText(getActivity().getApplicationContext(), "Welcome back", Toast.LENGTH_SHORT).show();
+                            Log.v("hiui", String.valueOf(a));
+                            editor.putString("username", username);
+                            editor.putString("password", password);
+                            editor.putString("alias", alias);
+                            editor.commit();
+                            //findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+                            startActivity(new Intent(getActivity().getApplicationContext(), MainActivity.class));
+                            getActivity().finish();
+                        }
+                        else
+                            handler.postDelayed(this, 1000);
+                    }
+                };
+                handler.postDelayed(r, 1000);
+            }
+        });
     }
 }

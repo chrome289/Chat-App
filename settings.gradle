@@ -1,1 +1,1 @@
-include ':app', ':builed.gradle', ':facebook', ':androidasync-2.0.8', ':ion-2.0.8'
+include ':app'

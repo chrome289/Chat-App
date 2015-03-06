@@ -107,7 +107,7 @@ public class chatwin extends ActionBarActivity
                         @Override
                         public void run()
                         {
-                            Toast.makeText(getApplicationContext(), send_to+" has not added you as friends", Toast.LENGTH_SHORT);
+                            Toast.makeText(getApplicationContext(), send_to+" has not added you as friends", Toast.LENGTH_LONG).show();
                         }
                     });
                 }

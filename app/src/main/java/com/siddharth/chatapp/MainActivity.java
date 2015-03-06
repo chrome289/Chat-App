@@ -11,6 +11,7 @@ import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Process;
 import android.support.v7.app.ActionBarActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Base64;
@@ -105,7 +106,7 @@ public class MainActivity extends ActionBarActivity
                         {
                             db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
                             db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
-                            Toast.makeText(getApplicationContext(), "recieved", Toast.LENGTH_SHORT);
+                            Toast.makeText(getApplicationContext(), "recieved", Toast.LENGTH_SHORT).show();
                             int x;
                             //Log.v("fdf", String.valueOf(friends.size()));
                             for (x = 0; x < friends.size(); x++)
@@ -176,16 +177,16 @@ public class MainActivity extends ActionBarActivity
                     public void run()
                     {
                         // add details to database
-
                         Cursor c = db.rawQuery("select * from user where friend = \"" + temp + "\"", null);
                         String mess = "";
                         if (c.getCount() == 0)
                         {
-                            db.execSQL("insert into user values(\"" + temp + "\",\"Empty\",\"" + name + "\",\"" + temp1 + "\",0);");
+                            db.execSQL("insert into user values(\"" + temp + "\",\"Empty\",\"" + name + "\",\"" + temp1 + "\",0,1);");
                         }
                         else
                         {
                             c.moveToFirst();
+                            db.execSQL("update user set validfriend = 1 where friend=\""+temp+"\"");
                             mess = c.getString(1);
                         }
                         Log.v("Dasda", "sdfsdf");
@@ -233,12 +234,12 @@ public class MainActivity extends ActionBarActivity
     {
         Log.v("yu", "ck");
         db = openOrCreateDatabase("database", Context.MODE_PRIVATE, null);
-        db.execSQL("create table if not exists user('friend' VARCHAR NOT NULL,'lastmessage' varchar , 'profilethumb' varchar , 'alias' varchar , 'unread' integer default 0);");
+        db.execSQL("create table if not exists user('friend' VARCHAR NOT NULL,'lastmessage' varchar , 'profilethumb' varchar , 'alias' varchar , 'unread' integer default 0,'validfriend' integer);");
         db.execSQL("create table if not exists localchat('friend1' varchar not null , 'friend2' varchar not null ,'message' varchar);");
         //update list from the local database
         if (!socket.connected())
         {
-            Cursor c = db.rawQuery("select * from user", null);
+            Cursor c = db.rawQuery("select * from user where validfriend = 1", null);
             while (c.moveToNext())
             {
                 friends.add(c.getString(0));
@@ -256,6 +257,7 @@ public class MainActivity extends ActionBarActivity
         {
             Object[] args = new Object[1];
             args[0] = username;
+            db.execSQL("update user set validfriend =0 where friend is not \"itjirjtirrihtirbgfbvdbdbg58656554554457\"");
             socket.emit("displayfriends", args[0]);
         }
     }
@@ -273,9 +275,10 @@ public class MainActivity extends ActionBarActivity
     public boolean onOptionsItemSelected(MenuItem item)
     {
         int id = item.getItemId();
-        if (id == R.id.action_settings)
+        switch (id)
         {
-            return true;
+            case R.id.settings:break;
+            case R.id.exit:android.os.Process.killProcess(Process.myPid());break;
         }
 
         return super.onOptionsItemSelected(item);
