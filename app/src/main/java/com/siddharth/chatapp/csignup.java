@@ -191,7 +191,7 @@ public class csignup extends Fragment implements View.OnClickListener
 
     }
 
-    //class to download pic async
+    //class to upload pic async
     private class LoadImage extends AsyncTask<String, String, Integer>
     {
         @Override
@@ -203,8 +203,8 @@ public class csignup extends Fragment implements View.OnClickListener
         protected Integer doInBackground(String... args)
         {
             final String fileName = picturePath, uploadFilePath = "d:/nodejs", uploadFileName = "d***";
-            HttpURLConnection conn = null;
-            DataOutputStream dos = null;
+            HttpURLConnection conn ;
+            DataOutputStream dos ;
             String lineEnd = "\r\n";
             String twoHyphens = "--";
             String boundary = "*****";

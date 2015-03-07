@@ -30,7 +30,6 @@
         <activity
             android:name=".chatwin"
             android:parentActivityName="com.siddharth.chatapp.MainActivity"
-            android:noHistory="true"
             android:label="@string/app_name" >
         </activity>
         <activity

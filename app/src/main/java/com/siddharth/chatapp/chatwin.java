@@ -1,13 +1,21 @@
 package com.siddharth.chatapp;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -19,20 +27,28 @@ import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
 
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 
 
 public class chatwin extends ActionBarActivity
 {
     public Socket socket;
-    public String send_to, username, alias;
+    public String send_to, username, alias, picturePath;
     SharedPreferences.Editor editor;
     SharedPreferences sharedPref;
     ArrayList<String> chatlist = new ArrayList<>();
     ArrayList<String> friend1 = new ArrayList<>();
     chatlistadapter arrayAdapter;
     SQLiteDatabase db;
+    public int PICK_IMAGE;
+    public boolean doit = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -51,6 +67,8 @@ public class chatwin extends ActionBarActivity
 
         getSupportActionBar().setTitle(alias);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setIcon(R.drawable.ic_launcher);
+
         try
         {
             socket = IO.socket("http://192.168.1.101:80");
@@ -83,7 +101,8 @@ public class chatwin extends ActionBarActivity
                         public void run()
                         {
                             if (sharedPref.getBoolean("handleit", false))
-                            {Log.v("say", "2");
+                            {
+                                Log.v("say", "2");
 
                                 db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
                                 db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
@@ -107,7 +126,7 @@ public class chatwin extends ActionBarActivity
                         @Override
                         public void run()
                         {
-                            Toast.makeText(getApplicationContext(), send_to+" has not added you as friends", Toast.LENGTH_LONG).show();
+                            Toast.makeText(getApplicationContext(), send_to + " has not added you as friends", Toast.LENGTH_LONG).show();
                         }
                     });
                 }
@@ -236,8 +255,50 @@ public class chatwin extends ActionBarActivity
                 editor.commit();
                 finish();
                 return true;
+            case R.id.attach:
+                Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(galleryIntent, PICK_IMAGE);
+                break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        Log.v("efrsers", "picturePath");
+        super.onActivityResult(requestCode, resultCode, data);
+        if (data != null)
+        {
+            Uri selectedImage = data.getData();
+            String[] filePathColumn = {MediaStore.Images.Media.DATA};
+            Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+            cursor.moveToFirst();
+            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+            picturePath = cursor.getString(columnIndex);
+            cursor.close();
+        }
+        else
+        {
+            Toast.makeText(this, "again", Toast.LENGTH_SHORT).show();
+        }
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Send Attachment ?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener()
+                {
+                    public void onClick(DialogInterface dialog, int id)
+                    {
+                        new LoadImage().execute();
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener()
+                {
+                    public void onClick(DialogInterface dialog, int id)
+                    {
+
+                    }
+                });
+        builder.setCancelable(false);
+        builder.show();
     }
 
     @Override
@@ -247,5 +308,132 @@ public class chatwin extends ActionBarActivity
         editor.putBoolean("handleit", false);
         editor.commit();
         finish();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
+        // Inflate the menu items for use in the action bar
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.chatwin, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    //class to upload pic async
+    private class LoadImage extends AsyncTask<String, String, Integer>
+    {
+        @Override
+        protected void onPreExecute()
+        {
+            super.onPreExecute();
+        }
+
+        protected Integer doInBackground(String... args)
+        {
+            final String fileName = picturePath, uploadFilePath = "d:/nodejs", uploadFileName = "d***";
+            HttpURLConnection conn ;
+            DataOutputStream dos ;
+            String lineEnd = "\r\n";
+            String twoHyphens = "--";
+            String boundary = "*****";
+            int bytesRead, bytesAvailable, bufferSize;
+            byte[] buffer;
+            int maxBufferSize = 1 * 1024 * 1024;
+            File sourceFile = new File(picturePath);
+            String filenameArray[] = picturePath.split("\\.");
+            String ex = filenameArray[filenameArray.length-1];
+
+            if (!sourceFile.isFile())
+            {
+                Log.e("uploadFile", "Source File not exist :" + uploadFilePath + "" + uploadFileName);
+                Log.v("Source File not exist :", uploadFilePath + "" + uploadFileName);
+            }
+            else
+            {
+                try
+                {
+
+                    // open a URL connection to the Servlet
+                    FileInputStream fileInputStream = new FileInputStream(sourceFile);
+
+                    String upLoadServerUri = "http://192.168.1.101/attachments";
+                    URL url = new URL(upLoadServerUri);
+
+                    // Open a HTTP  connection to  the URL
+                    conn = (HttpURLConnection) url.openConnection();
+                    conn.setDoInput(true); // Allow Inputs
+                    conn.setDoOutput(true); // Allow Outputs
+                    conn.setUseCaches(false); // Don't use a Cached Copy
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Connection", "Keep-Alive");
+                    conn.setRequestProperty("ENCTYPE", "multipart/form-data");
+                    conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
+                    conn.setRequestProperty("fileUploaded", fileName);
+                    conn.setRequestProperty("name", "user");
+
+                    dos = new DataOutputStream(conn.getOutputStream());
+
+                    dos.writeBytes(twoHyphens + boundary + lineEnd);
+                    dos.writeBytes("Content-Disposition: form-data; name=\"uploaded_file\";filename=\"" + username+" to "+send_to+"."+ex + "\"" + lineEnd);
+
+                    dos.writeBytes(lineEnd);
+
+                    // create a buffer of  maximum size
+                    bytesAvailable = fileInputStream.available();
+
+                    bufferSize = Math.min(bytesAvailable, maxBufferSize);
+                    buffer = new byte[bufferSize];
+
+                    // read file and write it into form...
+                    bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+
+                    while (bytesRead > 0)
+                    {
+                        dos.write(buffer, 0, bufferSize);
+                        bytesAvailable = fileInputStream.available();
+                        bufferSize = Math.min(bytesAvailable, maxBufferSize);
+                        bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+                    }
+
+                    // send multipart form data necesssary after file data...
+                    dos.writeBytes(lineEnd);
+                    dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
+
+                    // Responses from the server (code and message)
+                    int serverResponseCode = conn.getResponseCode();
+                    String serverResponseMessage = conn.getResponseMessage();
+
+                    Log.i("uploadFile", "HTTP Response is : " + serverResponseMessage + ": " + serverResponseCode);
+
+                    if (serverResponseCode == 200)
+                    {
+
+                        Log.v("babola", "dfd");
+                    }
+
+                    //close the streams //
+                    fileInputStream.close();
+                    dos.flush();
+                    dos.close();
+                }
+                catch (MalformedURLException e)
+                {
+                    e.printStackTrace();
+                    Log.e("Upload file to server", "error: " + e.getMessage(), e);
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+            } // End else bloc
+            int a = 0;
+            return a;
+        }
+
+        protected void onPostExecute(Integer imag)
+        {
+            doit = true;
+        }
     }
 }
