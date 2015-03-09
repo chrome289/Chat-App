@@ -73,7 +73,7 @@ public class MainActivity extends ActionBarActivity
 
         try
         {
-            socket = IO.socket("http://192.168.1.101:80");
+            socket = IO.socket("http://192.168.70.1:80");
         }
         catch (URISyntaxException e)
         {

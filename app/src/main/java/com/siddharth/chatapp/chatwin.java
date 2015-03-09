@@ -7,12 +7,17 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -30,11 +35,13 @@ import com.github.nkzawa.socketio.client.Socket;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Random;
 
 
 public class chatwin extends ActionBarActivity
@@ -45,10 +52,22 @@ public class chatwin extends ActionBarActivity
     SharedPreferences sharedPref;
     ArrayList<String> chatlist = new ArrayList<>();
     ArrayList<String> friend1 = new ArrayList<>();
+    ArrayList<Bitmap> image = new ArrayList<>();
+    ArrayList<String>uploaded_imagepath=new ArrayList<>();
     chatlistadapter arrayAdapter;
     SQLiteDatabase db;
     public int PICK_IMAGE;
     public boolean doit = false;
+    static final String AB = "0123456789qwertyuioplkjhgfdsazxcvbnm";
+    static Random rnd = new Random();
+
+    String randomString(int len)
+    {
+        StringBuilder sb = new StringBuilder(len);
+        for (int i = 0; i < len; i++)
+            sb.append(AB.charAt(rnd.nextInt(AB.length())));
+        return sb.toString();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -61,7 +80,7 @@ public class chatwin extends ActionBarActivity
         send_to = sharedPref.getString("send_to", "");
         username = sharedPref.getString("username", "");
         ListView l = (ListView) findViewById(R.id.listView2);
-        arrayAdapter = new chatlistadapter(this, chatlist, friend1);
+        arrayAdapter = new chatlistadapter(this, chatlist, friend1,image);
         l.setDivider(null);
         l.setAdapter(arrayAdapter);
 
@@ -71,7 +90,7 @@ public class chatwin extends ActionBarActivity
 
         try
         {
-            socket = IO.socket("http://192.168.1.101:80");
+            socket = IO.socket("http://192.168.70.1:80");
         }
         catch (URISyntaxException e)
         {
@@ -103,17 +122,81 @@ public class chatwin extends ActionBarActivity
                             if (sharedPref.getBoolean("handleit", false))
                             {
                                 Log.v("say", "2");
-
                                 db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
                                 db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
                                 chatlist.add(temp);
                                 friend1.add(send_to);
+                                image.add(null);
                                 arrayAdapter.notifyDataSetChanged();
                             }
                         }
                     });
                 }
 
+            }).on("messaged3", new Emitter.Listener()
+            {
+                @Override
+                public void call(Object[] args)
+                {
+                    final String filename = String.valueOf(args[0]);
+                    final byte[] decodedString = Base64.decode(((String) args[1]).trim(), Base64.DEFAULT);
+                    runOnUiThread(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            if (sharedPref.getBoolean("handleit", false))
+                            {
+                                Log.v("say", "2");
+
+                                Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+
+                                //save image to sd card
+                                String root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
+                                final Bitmap b = decodedByte;
+                                File myDir = new File(root + "/attachments");
+                                myDir.mkdirs();
+                                root = filename;
+                                final String name = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString() + "/attachments/" + filename;
+                                File file = new File(myDir, root);
+                                try
+                                {
+                                    FileOutputStream out = new FileOutputStream(file);
+                                    b.compress(Bitmap.CompressFormat.PNG, 100, out);
+                                    out.flush();
+                                    out.close();
+                                }
+                                catch (Exception e)
+                                {
+                                    e.printStackTrace();
+                                }
+
+                                try
+                                {//media scanner
+                                    MediaScannerConnection.scanFile(getApplicationContext(), new String[]{file.toString()}, null,
+                                            new MediaScannerConnection.OnScanCompletedListener()
+                                            {
+                                                public void onScanCompleted(String path, Uri uri)
+                                                {
+                                                    Log.i("ExternalStorage", "Scanned " + path + ":");
+                                                    Log.i("ExternalStorage", "-> uri=" + uri);
+                                                }
+                                            });
+                                }
+                                catch (Exception e)
+                                {
+                                }
+                                //update list
+                                db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + filename + "\" where friend = \"" + send_to + "\"");
+                                db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + filename + "\" , 1)");
+                                chatlist.add(name);
+                                friend1.add(send_to);
+                                image.add(b);
+                                arrayAdapter.notifyDataSetChanged();
+                            }
+                        }
+                    });
+                }
             }).on("notsent", new Emitter.Listener()
             {
 
@@ -138,6 +221,7 @@ public class chatwin extends ActionBarActivity
                 public void call(Object... args)
                 {
                     final String temp = String.valueOf(args[0]);
+                    final int n= (int) args[1];
                     Log.v("", "sent");
                     runOnUiThread(new Runnable()
                     {
@@ -148,6 +232,14 @@ public class chatwin extends ActionBarActivity
                             db.execSQL("insert into '" + send_to + "' values (\"" + username + "\" , \"" + send_to + "\" , \"" + temp + "\" , 1)");
                             chatlist.add(temp);
                             friend1.add(username);
+                            if(n==1)
+                            {
+                                Bitmap myBitmap = BitmapFactory.decodeFile(uploaded_imagepath.get(0));
+                                uploaded_imagepath.remove(0);
+                                image.add(myBitmap);
+                            }
+                            else
+                                image.add(null);
                             arrayAdapter.notifyDataSetChanged();
                         }
                     });
@@ -198,6 +290,7 @@ public class chatwin extends ActionBarActivity
                     friend1.add(send_to);
                 }
                 chatlist.add(temp);
+                image.add(null);
                 arrayAdapter.notifyDataSetChanged();
             }
             View tview = null;
@@ -220,14 +313,15 @@ public class chatwin extends ActionBarActivity
     public void taken(View view)
     {
         String temp;
-        Object[] args = new Object[3];
+        Object[] args = new Object[4];
         EditText e = (EditText) findViewById(R.id.editText);
         temp = String.valueOf(e.getText());
         e.setText("");
         args[0] = temp;
         args[1] = username;
         args[2] = send_to;
-        socket.emit("takethis", args[0], args[1], args[2]);
+        args[3] = 0;
+        socket.emit("takethis", args[0], args[1], args[2], args[3]);
     }
 
     //refresh chat history
@@ -331,17 +425,14 @@ public class chatwin extends ActionBarActivity
         protected Integer doInBackground(String... args)
         {
             final String fileName = picturePath, uploadFilePath = "d:/nodejs", uploadFileName = "d***";
-            HttpURLConnection conn ;
-            DataOutputStream dos ;
-            String lineEnd = "\r\n";
-            String twoHyphens = "--";
-            String boundary = "*****";
-            int bytesRead, bytesAvailable, bufferSize;
+            HttpURLConnection conn;
+            DataOutputStream dos;
+            String lineEnd = "\r\n", temp = "", twoHyphens = "--", boundary = "*****";
             byte[] buffer;
-            int maxBufferSize = 1 * 1024 * 1024;
+            int maxBufferSize = 1 * 1024 * 1024, bytesRead, bytesAvailable, bufferSize;
             File sourceFile = new File(picturePath);
             String filenameArray[] = picturePath.split("\\.");
-            String ex = filenameArray[filenameArray.length-1];
+            String ex = filenameArray[filenameArray.length - 1];
 
             if (!sourceFile.isFile())
             {
@@ -356,7 +447,7 @@ public class chatwin extends ActionBarActivity
                     // open a URL connection to the Servlet
                     FileInputStream fileInputStream = new FileInputStream(sourceFile);
 
-                    String upLoadServerUri = "http://192.168.1.101/attachments";
+                    String upLoadServerUri = "http://192.168.70.1/attachments";
                     URL url = new URL(upLoadServerUri);
 
                     // Open a HTTP  connection to  the URL
@@ -373,8 +464,9 @@ public class chatwin extends ActionBarActivity
 
                     dos = new DataOutputStream(conn.getOutputStream());
 
+                    temp = randomString(30);
                     dos.writeBytes(twoHyphens + boundary + lineEnd);
-                    dos.writeBytes("Content-Disposition: form-data; name=\"uploaded_file\";filename=\"" + username+" to "+send_to+"."+ex + "\"" + lineEnd);
+                    dos.writeBytes("Content-Disposition: form-data; name=\"uploaded_file\";filename=\"" + temp + "." + username + "." + send_to + "." + ex + "\"" + lineEnd);
 
                     dos.writeBytes(lineEnd);
 
@@ -428,9 +520,17 @@ public class chatwin extends ActionBarActivity
 
             } // End else bloc
             int a = 0;
+
+            //adding message to server
+            Object[] arg = new Object[4];
+            arg[0] = temp + "," + ex;
+            arg[1] = username;
+            arg[2] = send_to;
+            arg[3] = 1;
+            uploaded_imagepath.add(picturePath);
+            socket.emit("takethis", arg[0], arg[1], arg[2], arg[3]);
             return a;
         }
-
         protected void onPostExecute(Integer imag)
         {
             doit = true;

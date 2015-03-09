@@ -3,10 +3,12 @@ package com.siddharth.chatapp;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -15,14 +17,16 @@ public class chatlistadapter extends BaseAdapter
 {
     Activity context;
     ArrayList<String> title;
-    ArrayList<String>friend1;
+    ArrayList<String> friend1;
+    ArrayList<Bitmap> image;
 
-    public chatlistadapter(Activity context, ArrayList<String> title,ArrayList<String>friend1)
+    public chatlistadapter(Activity context, ArrayList<String> title, ArrayList<String> friend1, ArrayList<Bitmap> image)
     {
         super();
         this.context = context;
         this.title = title;
-        this.friend1=friend1;
+        this.friend1 = friend1;
+        this.image = image;
     }
 
     public int getCount()
@@ -61,16 +65,35 @@ public class chatlistadapter extends BaseAdapter
         {
             resource = R.layout.chatlist2;
         }
+
         convertView = inflater.inflate(resource, null);
         switch (resource)
         {
             case R.layout.chatlist:
                 TextView aA = (TextView) convertView.findViewById(R.id.send);
                 aA.setText(title.get(position));
+                ImageView i = (ImageView) convertView.findViewById(R.id.imageView3);
+                if (image.get(position) == null)
+                    i.setVisibility(View.INVISIBLE);
+                else
+                {
+                    i.setVisibility(View.VISIBLE);
+                    aA.setVisibility(View.INVISIBLE);
+                }
+                i.setImageBitmap(image.get(position));
                 break;
             case R.layout.chatlist2:
                 TextView bB = (TextView) convertView.findViewById(R.id.recieve);
                 bB.setText(title.get(position));
+                i = (ImageView) convertView.findViewById(R.id.imageView2);
+                if (image.get(position) == null)
+                    i.setVisibility(View.INVISIBLE);
+                else
+                {
+                    i.setVisibility(View.VISIBLE);
+                    bB.setVisibility(View.INVISIBLE);
+                }
+                i.setImageBitmap(image.get(position));
                 break;
         }
         return convertView;
