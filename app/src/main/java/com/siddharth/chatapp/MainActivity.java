@@ -94,7 +94,6 @@ public class MainActivity extends ActionBarActivity
             public void call(Object[] args)
             {
                 final String temp = String.valueOf(args[0]);
-                final int  t=(int)args[1];
                 send_to = (String) args[1];
                 Log.v("say", "1");
                 runOnUiThread(new Runnable()
@@ -129,7 +128,7 @@ public class MainActivity extends ActionBarActivity
             @Override
             public void call(Object[] args)
             {
-                final String filename= (String) args[0];
+                final String filename = (String) args[0];
                 final byte[] decodedString = Base64.decode(((String) args[1]).trim(), Base64.DEFAULT);
                 send_to = (String) args[2];
                 Log.v("say", "1");
@@ -219,7 +218,6 @@ public class MainActivity extends ActionBarActivity
                 File myDir = new File(root + "/saved_images_thumb");
                 myDir.mkdirs();
                 root = "Image-" + temp + ".png";
-                final String name = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString() + "/saved_images_thumb/" + "Image-" + username + ".png";
                 File file = new File(myDir, root);
                 try
                 {
@@ -258,12 +256,12 @@ public class MainActivity extends ActionBarActivity
                         String mess = "";
                         if (c.getCount() == 0)
                         {
-                            db.execSQL("insert into user values(\"" + temp + "\",\"Empty\",\"" + name + "\",\"" + temp1 + "\",0,1);");
+                            db.execSQL("insert into user values(\"" + temp + "\",\"Empty\",\"" + temp + "\",\"" + temp1 + "\",0,1);");
                         }
                         else
                         {
                             c.moveToFirst();
-                            db.execSQL("update user set validfriend = 1 where friend=\""+temp+"\"");
+                            db.execSQL("update user set validfriend = 1 where friend=\"" + temp + "\"");
                             mess = c.getString(1);
                         }
                         Log.v("Dasda", "sdfsdf");
@@ -275,10 +273,10 @@ public class MainActivity extends ActionBarActivity
                         unread.add((long) 0);
                         db.execSQL("create table if not exists '" + temp + "'('friend1' varchar not null , 'friend2' varchar not null ,'message' varchar,'delivered' integer,'isattach' integer);");
                         arrayAdapter.notifyDataSetChanged();
-                        Object []u=new Object[2];
-                        u[0]=username;
-                        u[1]=temp;
-                        socket.emit("refresh",u[0],u[1]);
+                        Object[] u = new Object[2];
+                        u[0] = username;
+                        u[1] = temp;
+                        socket.emit("refresh", u[0], u[1]);
                     }
                 });
             }
@@ -357,8 +355,11 @@ public class MainActivity extends ActionBarActivity
         int id = item.getItemId();
         switch (id)
         {
-            case R.id.settings:break;
-            case R.id.exit:android.os.Process.killProcess(Process.myPid());break;
+            case R.id.settings:
+                break;
+            case R.id.exit:
+                android.os.Process.killProcess(Process.myPid());
+                break;
         }
 
         return super.onOptionsItemSelected(item);

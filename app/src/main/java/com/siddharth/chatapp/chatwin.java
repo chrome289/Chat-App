@@ -23,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -274,31 +275,48 @@ public class chatwin extends ActionBarActivity
 
             });
             socket.connect();
-            Cursor c = db.rawQuery("select * from '" + send_to + "'", null);
-            String temp;
-            while (c.moveToNext())
+            l = (ListView) findViewById(R.id.listView2);
+            l.setOnItemClickListener(new AdapterView.OnItemClickListener()
             {
-                if (c.getString(0).equals(username))
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id)
                 {
-                    temp = c.getString(2);
-                    friend1.add(username);
-
+                    Intent intent = new Intent();
+                    intent.setAction(Intent.ACTION_VIEW);
+                    intent.setDataAndType(Uri.fromFile(new File(chatlist.get(position))), "image/*");
+                    startActivity(intent);
                 }
-                else
-                {
-                    temp = c.getString(2);
-                    friend1.add(send_to);
-                }
-                chatlist.add(temp);
-                image.add(null);
-                arrayAdapter.notifyDataSetChanged();
-            }
+            });
             View tview = null;
-//            restorehistory();
+            restorehistory();
             refresh(tview);
+
         }
     }
 
+    //restore previous chat history
+    private void restorehistory()
+    {
+        Button b = (Button) findViewById(R.id.button2);
+        b.setEnabled(false);
+        Cursor c = db.rawQuery("select * from \"" + send_to + "\"", null);
+        while (c.moveToNext())
+        {
+            friend1.add(c.getString(0));
+            if (c.getInt(4) == 1)
+            {
+                Bitmap bitmap = BitmapFactory.decodeFile(c.getString(2));
+                image.add(bitmap);
+                chatlist.add(c.getString(2));
+            }
+            else
+            {
+                image.add(null);
+                chatlist.add(c.getString(2));
+            }
+        }
+        arrayAdapter.notifyDataSetChanged();
+        b.setEnabled(true);
+    }
 
     //send message
     public void taken(View view)
