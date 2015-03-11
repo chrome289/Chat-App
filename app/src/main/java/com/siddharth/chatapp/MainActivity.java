@@ -94,6 +94,7 @@ public class MainActivity extends ActionBarActivity
             public void call(Object[] args)
             {
                 final String temp = String.valueOf(args[0]);
+                final int  t=(int)args[1];
                 send_to = (String) args[1];
                 Log.v("say", "1");
                 runOnUiThread(new Runnable()
@@ -105,7 +106,7 @@ public class MainActivity extends ActionBarActivity
                         if (!sharedPref.getBoolean("handleit", false))
                         {
                             db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
-                            db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
+                            db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1,0)");
                             Toast.makeText(getApplicationContext(), "recieved", Toast.LENGTH_SHORT).show();
                             int x;
                             //Log.v("fdf", String.valueOf(friends.size()));
@@ -115,6 +116,82 @@ public class MainActivity extends ActionBarActivity
                                     break;
                             }
                             subtext.set(x, send_to + "  :  " + temp);
+                            unread.set(x, unread.get(x) + 1);
+                            arrayAdapter.notifyDataSetChanged();
+                        }
+                    }
+                });
+            }
+
+        }).on("messaged3", new Emitter.Listener()
+        {
+
+            @Override
+            public void call(Object[] args)
+            {
+                final String filename= (String) args[0];
+                final byte[] decodedString = Base64.decode(((String) args[1]).trim(), Base64.DEFAULT);
+                send_to = (String) args[2];
+                Log.v("say", "1");
+                runOnUiThread(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        //Log.v("sgfg", String.valueOf(sharedPref.getBoolean("handleit",false)));
+                        if (!sharedPref.getBoolean("handleit", false))
+                        {
+                            //save attachment
+                            Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+
+                            //save image to sd card
+                            String root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
+                            final Bitmap b = decodedByte;
+                            File myDir = new File(root + "/attachments");
+                            myDir.mkdirs();
+                            root = filename;
+                            final String name = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString() + "/attachments/" + filename;
+                            File file = new File(myDir, root);
+                            try
+                            {
+                                FileOutputStream out = new FileOutputStream(file);
+                                b.compress(Bitmap.CompressFormat.PNG, 100, out);
+                                out.flush();
+                                out.close();
+                            }
+                            catch (Exception e)
+                            {
+                                e.printStackTrace();
+                            }
+
+                            try
+                            {//media scanner
+                                MediaScannerConnection.scanFile(getApplicationContext(), new String[]{file.toString()}, null,
+                                        new MediaScannerConnection.OnScanCompletedListener()
+                                        {
+                                            public void onScanCompleted(String path, Uri uri)
+                                            {
+                                                Log.i("ExternalStorage", "Scanned " + path + ":");
+                                                Log.i("ExternalStorage", "-> uri=" + uri);
+                                            }
+                                        });
+                            }
+                            catch (Exception e)
+                            {
+                            }
+
+                            db.execSQL("update user set lastmessage = \"" + send_to + "  :  Attachment" + "\" where friend = \"" + send_to + "\"");
+                            db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + name + "\" , 1,1)");
+                            Toast.makeText(getApplicationContext(), "recieved", Toast.LENGTH_SHORT).show();
+                            int x;
+                            //Log.v("fdf", String.valueOf(friends.size()));
+                            for (x = 0; x < friends.size(); x++)
+                            {
+                                if (friends.get(x).equals(send_to))
+                                    break;
+                            }
+
+                            subtext.set(x, send_to + "  :  Attachment");
                             unread.set(x, unread.get(x) + 1);
                             arrayAdapter.notifyDataSetChanged();
                         }
@@ -196,8 +273,12 @@ public class MainActivity extends ActionBarActivity
                         profilethumb.add(b);
                         alias.add(temp1);
                         unread.add((long) 0);
-                        db.execSQL("create table if not exists '" + temp + "'('friend1' varchar not null , 'friend2' varchar not null ,'message' varchar,'delivered' integer);");
+                        db.execSQL("create table if not exists '" + temp + "'('friend1' varchar not null , 'friend2' varchar not null ,'message' varchar,'delivered' integer,'isattach' integer);");
                         arrayAdapter.notifyDataSetChanged();
+                        Object []u=new Object[2];
+                        u[0]=username;
+                        u[1]=temp;
+                        socket.emit("refresh",u[0],u[1]);
                     }
                 });
             }
@@ -235,7 +316,6 @@ public class MainActivity extends ActionBarActivity
         Log.v("yu", "ck");
         db = openOrCreateDatabase("database", Context.MODE_PRIVATE, null);
         db.execSQL("create table if not exists user('friend' VARCHAR NOT NULL,'lastmessage' varchar , 'profilethumb' varchar , 'alias' varchar , 'unread' integer default 0,'validfriend' integer);");
-        db.execSQL("create table if not exists localchat('friend1' varchar not null , 'friend2' varchar not null ,'message' varchar);");
         //update list from the local database
         if (!socket.connected())
         {

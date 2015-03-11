@@ -294,20 +294,11 @@ public class chatwin extends ActionBarActivity
                 arrayAdapter.notifyDataSetChanged();
             }
             View tview = null;
+//            restorehistory();
             refresh(tview);
         }
     }
 
-    //restore previous chat history
-    private void restorehistory()
-    {
-        Object[] args = new Object[2];
-        args[0] = username;
-        args[1] = send_to;
-        socket.emit("restorehistory", args[0], args[1]);
-        Button b = (Button) findViewById(R.id.button2);
-        b.setEnabled(false);
-    }
 
     //send message
     public void taken(View view)
