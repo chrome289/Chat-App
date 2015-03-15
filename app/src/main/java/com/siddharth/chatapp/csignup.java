@@ -226,7 +226,7 @@ public class csignup extends Fragment implements View.OnClickListener
                     // open a URL connection to the Servlet
                     FileInputStream fileInputStream = new FileInputStream(sourceFile);
 
-                    String upLoadServerUri = "http://192.168.1.101";
+                    String upLoadServerUri = "http://192.168.70.1";
                     URL url = new URL(upLoadServerUri);
 
                     // Open a HTTP  connection to  the URL

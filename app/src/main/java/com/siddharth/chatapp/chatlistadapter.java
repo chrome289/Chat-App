@@ -19,14 +19,16 @@ public class chatlistadapter extends BaseAdapter
     ArrayList<String> title;
     ArrayList<String> friend1;
     ArrayList<Bitmap> image;
+    ArrayList<String> time;
 
-    public chatlistadapter(Activity context, ArrayList<String> title, ArrayList<String> friend1, ArrayList<Bitmap> image)
+    public chatlistadapter(Activity context, ArrayList<String> title, ArrayList<String> friend1, ArrayList<Bitmap> image,ArrayList<String>time)
     {
         super();
         this.context = context;
         this.title = title;
         this.friend1 = friend1;
         this.image = image;
+        this.time=time;
     }
 
     public int getCount()
@@ -72,6 +74,8 @@ public class chatlistadapter extends BaseAdapter
             case R.layout.chatlist:
                 TextView aA = (TextView) convertView.findViewById(R.id.send);
                 aA.setText(title.get(position));
+                aA = (TextView) convertView.findViewById(R.id.textView6);
+                aA.setText(time.get(position));
                 ImageView i = (ImageView) convertView.findViewById(R.id.imageView3);
                 if (image.get(position) == null)
                     i.setVisibility(View.INVISIBLE);
@@ -85,6 +89,8 @@ public class chatlistadapter extends BaseAdapter
             case R.layout.chatlist2:
                 TextView bB = (TextView) convertView.findViewById(R.id.recieve);
                 bB.setText(title.get(position));
+                bB = (TextView) convertView.findViewById(R.id.textView5);
+                bB.setText(time.get(position));
                 i = (ImageView) convertView.findViewById(R.id.imageView2);
                 if (image.get(position) == null)
                     i.setVisibility(View.INVISIBLE);

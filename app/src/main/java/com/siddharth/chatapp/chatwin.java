@@ -54,6 +54,7 @@ public class chatwin extends ActionBarActivity
     ArrayList<String> chatlist = new ArrayList<>();
     ArrayList<String> friend1 = new ArrayList<>();
     ArrayList<Bitmap> image = new ArrayList<>();
+    ArrayList<String> time=new ArrayList<>();
     ArrayList<String>uploaded_imagepath=new ArrayList<>();
     chatlistadapter arrayAdapter;
     SQLiteDatabase db;
@@ -81,7 +82,7 @@ public class chatwin extends ActionBarActivity
         send_to = sharedPref.getString("send_to", "");
         username = sharedPref.getString("username", "");
         ListView l = (ListView) findViewById(R.id.listView2);
-        arrayAdapter = new chatlistadapter(this, chatlist, friend1,image);
+        arrayAdapter = new chatlistadapter(this, chatlist, friend1,image,time);
         l.setDivider(null);
         l.setAdapter(arrayAdapter);
 
@@ -115,6 +116,7 @@ public class chatwin extends ActionBarActivity
                 public void call(Object[] args)
                 {
                     final String temp = String.valueOf(args[0]);
+                    final String temp2=String.valueOf(args[1]);
                     runOnUiThread(new Runnable()
                     {
                         @Override
@@ -124,10 +126,11 @@ public class chatwin extends ActionBarActivity
                             {
                                 Log.v("say", "2");
                                 db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
-                                db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1)");
+                                db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1,0,\""+temp2+"\")");
                                 chatlist.add(temp);
                                 friend1.add(send_to);
                                 image.add(null);
+                                time.add(temp2);
                                 arrayAdapter.notifyDataSetChanged();
                             }
                         }
@@ -141,6 +144,7 @@ public class chatwin extends ActionBarActivity
                 {
                     final String filename = String.valueOf(args[0]);
                     final byte[] decodedString = Base64.decode(((String) args[1]).trim(), Base64.DEFAULT);
+                    final String temp2=String.valueOf(args[2]);
                     runOnUiThread(new Runnable()
                     {
                         @Override
@@ -189,10 +193,11 @@ public class chatwin extends ActionBarActivity
                                 }
                                 //update list
                                 db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + filename + "\" where friend = \"" + send_to + "\"");
-                                db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + filename + "\" , 1)");
+                                db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + filename + "\" , 1,1,\"" + temp2 + "\")");
                                 chatlist.add(name);
                                 friend1.add(send_to);
                                 image.add(b);
+                                time.add(temp2);
                                 arrayAdapter.notifyDataSetChanged();
                             }
                         }
@@ -223,6 +228,7 @@ public class chatwin extends ActionBarActivity
                 {
                     final String temp = String.valueOf(args[0]);
                     final int n= (int) args[1];
+                    final String temp2=String.valueOf(args[2]);
                     Log.v("", "sent");
                     runOnUiThread(new Runnable()
                     {
@@ -230,9 +236,10 @@ public class chatwin extends ActionBarActivity
                         public void run()
                         {
                             db.execSQL("update user set lastmessage = \"You  :  " + temp + "\" where friend = \"" + send_to + "\"");
-                            db.execSQL("insert into '" + send_to + "' values (\"" + username + "\" , \"" + send_to + "\" , \"" + temp + "\" , 1)");
+                            db.execSQL("insert into '" + send_to + "' values (\"" + username + "\" , \"" + send_to + "\" , \"" + temp + "\" , 1,"+n+",\""+temp2+"\")");
                             chatlist.add(temp);
                             friend1.add(username);
+                            time.add(temp2);
                             if(n==1)
                             {
                                 Bitmap myBitmap = BitmapFactory.decodeFile(uploaded_imagepath.get(0));
@@ -302,6 +309,7 @@ public class chatwin extends ActionBarActivity
         while (c.moveToNext())
         {
             friend1.add(c.getString(0));
+            time.add(c.getString(5));
             if (c.getInt(4) == 1)
             {
                 Bitmap bitmap = BitmapFactory.decodeFile(c.getString(2));
