@@ -54,8 +54,9 @@ public class chatwin extends ActionBarActivity
     ArrayList<String> chatlist = new ArrayList<>();
     ArrayList<String> friend1 = new ArrayList<>();
     ArrayList<Bitmap> image = new ArrayList<>();
-    ArrayList<String> time=new ArrayList<>();
-    ArrayList<String>uploaded_imagepath=new ArrayList<>();
+    ArrayList<String> time = new ArrayList<>();
+    ArrayList<String> uploaded_imagepath = new ArrayList<>();
+    ArrayList<Boolean> showDate = new ArrayList<>();
     chatlistadapter arrayAdapter;
     SQLiteDatabase db;
     public int PICK_IMAGE;
@@ -78,11 +79,14 @@ public class chatwin extends ActionBarActivity
         setContentView(R.layout.chatwin);
         sharedPref = getSharedPreferences("setting", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
+        if (!sharedPref.contains("date"))
+            editor.putString("date", "");
+        editor.putString("date", "");
         alias = sharedPref.getString("alias2", "");
         send_to = sharedPref.getString("send_to", "");
         username = sharedPref.getString("username", "");
         ListView l = (ListView) findViewById(R.id.listView2);
-        arrayAdapter = new chatlistadapter(this, chatlist, friend1,image,time);
+        arrayAdapter = new chatlistadapter(this, chatlist, friend1, image, time, showDate);
         l.setDivider(null);
         l.setAdapter(arrayAdapter);
 
@@ -116,7 +120,7 @@ public class chatwin extends ActionBarActivity
                 public void call(Object[] args)
                 {
                     final String temp = String.valueOf(args[0]);
-                    final String temp2=String.valueOf(args[1]);
+                    final String temp2 = String.valueOf(args[1]);
                     runOnUiThread(new Runnable()
                     {
                         @Override
@@ -124,9 +128,17 @@ public class chatwin extends ActionBarActivity
                         {
                             if (sharedPref.getBoolean("handleit", false))
                             {
+                                if ((temp2.substring(0,10)).compareTo(sharedPref.getString("date", "")) != 0)
+                                {
+                                    showDate.add(true);
+                                    editor.putString("date", temp2.substring(0,10));
+                                    editor.commit();
+                                }
+                                else
+                                    showDate.add(false);
                                 Log.v("say", "2");
                                 db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
-                                db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1,0,\""+temp2+"\")");
+                                db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1,0,\"" + temp2 + "\")");
                                 chatlist.add(temp);
                                 friend1.add(send_to);
                                 image.add(null);
@@ -136,7 +148,6 @@ public class chatwin extends ActionBarActivity
                         }
                     });
                 }
-
             }).on("messaged3", new Emitter.Listener()
             {
                 @Override
@@ -144,7 +155,7 @@ public class chatwin extends ActionBarActivity
                 {
                     final String filename = String.valueOf(args[0]);
                     final byte[] decodedString = Base64.decode(((String) args[1]).trim(), Base64.DEFAULT);
-                    final String temp2=String.valueOf(args[2]);
+                    final String temp2 = String.valueOf(args[2]);
                     runOnUiThread(new Runnable()
                     {
                         @Override
@@ -194,6 +205,14 @@ public class chatwin extends ActionBarActivity
                                 //update list
                                 db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + filename + "\" where friend = \"" + send_to + "\"");
                                 db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + filename + "\" , 1,1,\"" + temp2 + "\")");
+                                if ((temp2.substring(0,10)).compareTo(sharedPref.getString("date", "")) != 0)
+                                {
+                                    showDate.add(true);
+                                    editor.putString("date", temp2.substring(0,10));
+                                    editor.commit();
+                                }
+                                else
+                                    showDate.add(false);
                                 chatlist.add(name);
                                 friend1.add(send_to);
                                 image.add(b);
@@ -227,8 +246,8 @@ public class chatwin extends ActionBarActivity
                 public void call(Object... args)
                 {
                     final String temp = String.valueOf(args[0]);
-                    final int n= (int) args[1];
-                    final String temp2=String.valueOf(args[2]);
+                    final int n = (int) args[1];
+                    final String temp2 = String.valueOf(args[2]);
                     Log.v("", "sent");
                     runOnUiThread(new Runnable()
                     {
@@ -236,11 +255,19 @@ public class chatwin extends ActionBarActivity
                         public void run()
                         {
                             db.execSQL("update user set lastmessage = \"You  :  " + temp + "\" where friend = \"" + send_to + "\"");
-                            db.execSQL("insert into '" + send_to + "' values (\"" + username + "\" , \"" + send_to + "\" , \"" + temp + "\" , 1,"+n+",\""+temp2+"\")");
+                            db.execSQL("insert into '" + send_to + "' values (\"" + username + "\" , \"" + send_to + "\" , \"" + temp + "\" , 1," + n + ",\"" + temp2 + "\")");
                             chatlist.add(temp);
                             friend1.add(username);
                             time.add(temp2);
-                            if(n==1)
+                            if ((temp2.substring(0,10)).compareTo(sharedPref.getString("date", "")) != 0)
+                            {
+                                showDate.add(true);
+                                editor.putString("date", temp2.substring(0,10));
+                                editor.commit();
+                            }
+                            else
+                                showDate.add(false);
+                            if (n == 1)
                             {
                                 Bitmap myBitmap = BitmapFactory.decodeFile(uploaded_imagepath.get(0));
                                 uploaded_imagepath.remove(0);
@@ -321,7 +348,16 @@ public class chatwin extends ActionBarActivity
                 image.add(null);
                 chatlist.add(c.getString(2));
             }
+            if ((c.getString(5).substring(0,10)).compareTo(sharedPref.getString("date", "")) != 0)
+            {
+                showDate.add(true);
+                editor.putString("date", c.getString(5).substring(0,10));
+                editor.commit();
+            }
+            else
+                showDate.add(false);
         }
+
         arrayAdapter.notifyDataSetChanged();
         b.setEnabled(true);
     }
@@ -548,6 +584,7 @@ public class chatwin extends ActionBarActivity
             socket.emit("takethis", arg[0], arg[1], arg[2], arg[3]);
             return a;
         }
+
         protected void onPostExecute(Integer imag)
         {
             doit = true;

@@ -38,7 +38,7 @@ public class clogin extends Fragment implements View.OnClickListener
 {
     private android.os.Handler handler = new android.os.Handler();
     private Socket socket;
-    String username = "8435013374", password = "1", fri = "", alias = "", email = "";
+    String username, password, fri = "", alias = "", email = "";
     public boolean login = false;
     int a = 0, c = 0;
     Bitmap image;
@@ -225,15 +225,23 @@ public class clogin extends Fragment implements View.OnClickListener
                 //password = "1";
                 Object[] o = new Object[2];
 
-                if (sharedPref.getBoolean("remember", false))
+                if (username.length() == 0 || password.length() == 0)
                 {
-                    Log.v("howdy", "ihyihih");
-
-                    if (username.length() == 0 || password.length() == 0)
+                    o[0] = sharedPref.getString("username", "");
+                    o[1] = sharedPref.getString("password", "");
+                    Toast.makeText(getActivity().getApplicationContext(), "Wrong Credentials", Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    if (sharedPref.getBoolean("remember", false))
                     {
-                        o[0] = sharedPref.getString("username", "");
-                        o[1] = sharedPref.getString("password", "");
-                        Toast.makeText(getActivity().getApplicationContext(), "Wrong Credentials", Toast.LENGTH_SHORT).show();
+                        Log.v("howdy", "ihyihih");
+                        o[0] = username;
+                        o[1] = password;
+                        editor.putString("username", username);
+                        editor.putString("password", password);
+                        editor.commit();
+                        socket.emit("login", o[0], o[1]);
                     }
                     else
                     {
@@ -241,16 +249,9 @@ public class clogin extends Fragment implements View.OnClickListener
                         o[1] = password;
                         editor.putString("username", username);
                         editor.putString("password", password);
+                        editor.commit();
                         socket.emit("login", o[0], o[1]);
                     }
-                }
-                else
-                {
-                    o[0] = username;
-                    o[1] = password;
-                    editor.putString("username", username);
-                    editor.putString("password", password);
-                    socket.emit("login", o[0], o[1]);
                 }
                 break;
             case R.id.button4:

@@ -2,18 +2,38 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:background="#ffe2e6e3">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Medium Text"
+        android:id="@+id/textView9"
+        android:layout_column="9"
+        android:gravity="center"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="30dp"
+        android:background="#ffe2e6e3"/>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
               android:id="@+id/sd"
               android:orientation="horizontal">
 
     <RelativeLayout
     android:layout_width="0dp"
     android:layout_height="match_parent"
-    android:layout_weight=".30"></RelativeLayout>
+    android:layout_weight=".30"
+    android:background="#ffe2e6e3"></RelativeLayout>
 
     <TableLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight=".70">
+
         <TableRow
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
@@ -26,7 +46,7 @@
             android:layout_marginTop="10dp"
             android:layout_marginBottom="10dp"
             android:padding="10dp"
-            android:background="#ff8ea8f3"
+            android:background="#ffb1c6f3"
             android:layout_weight=".70"/>
 
         <ImageView
@@ -58,6 +78,8 @@
                 />
 
         </TableRow>
+
     </TableLayout>
 
+</LinearLayout>
 </LinearLayout>
