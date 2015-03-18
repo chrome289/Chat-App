@@ -128,10 +128,10 @@ public class chatwin extends ActionBarActivity
                         {
                             if (sharedPref.getBoolean("handleit", false))
                             {
-                                if ((temp2.substring(0,10)).compareTo(sharedPref.getString("date", "")) != 0)
+                                if ((temp2.substring(0, 10)).compareTo(sharedPref.getString("date", "")) != 0)
                                 {
                                     showDate.add(true);
-                                    editor.putString("date", temp2.substring(0,10));
+                                    editor.putString("date", temp2.substring(0, 10));
                                     editor.commit();
                                 }
                                 else
@@ -205,10 +205,10 @@ public class chatwin extends ActionBarActivity
                                 //update list
                                 db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + filename + "\" where friend = \"" + send_to + "\"");
                                 db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + filename + "\" , 1,1,\"" + temp2 + "\")");
-                                if ((temp2.substring(0,10)).compareTo(sharedPref.getString("date", "")) != 0)
+                                if ((temp2.substring(0, 10)).compareTo(sharedPref.getString("date", "")) != 0)
                                 {
                                     showDate.add(true);
-                                    editor.putString("date", temp2.substring(0,10));
+                                    editor.putString("date", temp2.substring(0, 10));
                                     editor.commit();
                                 }
                                 else
@@ -254,15 +254,10 @@ public class chatwin extends ActionBarActivity
                         @Override
                         public void run()
                         {
-                            db.execSQL("update user set lastmessage = \"You  :  " + temp + "\" where friend = \"" + send_to + "\"");
-                            db.execSQL("insert into '" + send_to + "' values (\"" + username + "\" , \"" + send_to + "\" , \"" + temp + "\" , 1," + n + ",\"" + temp2 + "\")");
-                            chatlist.add(temp);
-                            friend1.add(username);
-                            time.add(temp2);
-                            if ((temp2.substring(0,10)).compareTo(sharedPref.getString("date", "")) != 0)
+                            if ((temp2.substring(0, 10)).compareTo(sharedPref.getString("date", "")) != 0)
                             {
                                 showDate.add(true);
-                                editor.putString("date", temp2.substring(0,10));
+                                editor.putString("date", temp2.substring(0, 10));
                                 editor.commit();
                             }
                             else
@@ -270,11 +265,24 @@ public class chatwin extends ActionBarActivity
                             if (n == 1)
                             {
                                 Bitmap myBitmap = BitmapFactory.decodeFile(uploaded_imagepath.get(0));
-                                uploaded_imagepath.remove(0);
                                 image.add(myBitmap);
+                                db.execSQL("update user set lastmessage = \"You  :  " + uploaded_imagepath.get(0) + "\" where friend = \"" + send_to + "\"");
+                                db.execSQL("insert into '" + send_to + "' values (\"" + username + "\" , \"" + send_to + "\" , \"" + uploaded_imagepath.get(0) + "\" , 1," + n + ",\"" + temp2 + "\")");
+                                chatlist.add(uploaded_imagepath.get(0));
+                                friend1.add(username);
+                                time.add(temp2);
+                                uploaded_imagepath.remove(0);
                             }
                             else
+                            {
                                 image.add(null);
+
+                                db.execSQL("update user set lastmessage = \"You  :  " + temp + "\" where friend = \"" + send_to + "\"");
+                                db.execSQL("insert into '" + send_to + "' values (\"" + username + "\" , \"" + send_to + "\" , \"" + temp + "\" , 1," + n + ",\"" + temp2 + "\")");
+                                chatlist.add(temp);
+                                friend1.add(username);
+                                time.add(temp2);
+                            }
                             arrayAdapter.notifyDataSetChanged();
                         }
                     });
@@ -316,6 +324,7 @@ public class chatwin extends ActionBarActivity
                 {
                     Intent intent = new Intent();
                     intent.setAction(Intent.ACTION_VIEW);
+                    Log.v("gile", chatlist.get(position));
                     intent.setDataAndType(Uri.fromFile(new File(chatlist.get(position))), "image/*");
                     startActivity(intent);
                 }
@@ -348,10 +357,10 @@ public class chatwin extends ActionBarActivity
                 image.add(null);
                 chatlist.add(c.getString(2));
             }
-            if ((c.getString(5).substring(0,10)).compareTo(sharedPref.getString("date", "")) != 0)
+            if ((c.getString(5).substring(0, 10)).compareTo(sharedPref.getString("date", "")) != 0)
             {
                 showDate.add(true);
-                editor.putString("date", c.getString(5).substring(0,10));
+                editor.putString("date", c.getString(5).substring(0, 10));
                 editor.commit();
             }
             else
@@ -576,7 +585,7 @@ public class chatwin extends ActionBarActivity
 
             //adding message to server
             Object[] arg = new Object[4];
-            arg[0] = temp + "," + ex;
+            arg[0] = temp + "." + ex;
             arg[1] = username;
             arg[2] = send_to;
             arg[3] = 1;

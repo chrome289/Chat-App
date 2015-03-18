@@ -95,7 +95,7 @@ public class MainActivity extends ActionBarActivity
             {
                 final String temp = String.valueOf(args[0]);
                 send_to = (String) args[1];
-                final String temp2=String.valueOf(args[2]);
+                final String temp2 = String.valueOf(args[2]);
                 Log.v("say", "1");
                 runOnUiThread(new Runnable()
                 {
@@ -106,7 +106,7 @@ public class MainActivity extends ActionBarActivity
                         if (!sharedPref.getBoolean("handleit", false))
                         {
                             db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
-                            db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1,0,\""+temp2+"\")");
+                            db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1,0,\"" + temp2 + "\")");
                             Toast.makeText(getApplicationContext(), "recieved", Toast.LENGTH_SHORT).show();
                             int x;
                             //Log.v("fdf", String.valueOf(friends.size()));
@@ -132,7 +132,7 @@ public class MainActivity extends ActionBarActivity
                 final String filename = (String) args[0];
                 final byte[] decodedString = Base64.decode(((String) args[1]).trim(), Base64.DEFAULT);
                 send_to = (String) args[3];
-                final String temp2=String.valueOf(args[2]);
+                final String temp2 = String.valueOf(args[2]);
                 Log.v("say", "1");
                 runOnUiThread(new Runnable()
                 {
@@ -182,7 +182,7 @@ public class MainActivity extends ActionBarActivity
                             }
 
                             db.execSQL("update user set lastmessage = \"" + send_to + "  :  Attachment" + "\" where friend = \"" + send_to + "\"");
-                            db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + name + "\" , 1,1,\""+temp2+"\")");
+                            db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + name + "\" , 1,1,\"" + temp2 + "\")");
                             Toast.makeText(getApplicationContext(), "recieved", Toast.LENGTH_SHORT).show();
                             int x;
                             //Log.v("fdf", String.valueOf(friends.size()));
@@ -266,7 +266,7 @@ public class MainActivity extends ActionBarActivity
                             db.execSQL("update user set validfriend = 1 where friend=\"" + temp + "\"");
                             mess = c.getString(1);
                         }
-                        Log.v("Dasda", "sdfsdf");
+                        Log.v("Dasda", temp);
                         //update list
                         friends.add(temp);
                         subtext.add(mess);
@@ -322,6 +322,7 @@ public class MainActivity extends ActionBarActivity
             Cursor c = db.rawQuery("select * from user where validfriend = 1", null);
             while (c.moveToNext())
             {
+                Log.v("yyyy",c.getString(0));
                 friends.add(c.getString(0));
                 subtext.add(c.getString(1));
                 alias.add(c.getString(3));

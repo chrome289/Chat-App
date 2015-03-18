@@ -44,7 +44,6 @@
             android:layout_gravity="right"
             android:gravity="right"
             android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
             android:padding="10dp"
             android:background="#ffb1c6f3"
             android:layout_weight=".70"/>
@@ -55,14 +54,16 @@
             android:adjustViewBounds="true"
             android:id="@+id/imageView3"
             android:maxHeight="160dp"
-            android:maxWidth="200dp"/>
+            android:maxWidth="200dp"
+            android:layout_gravity="right"
+            android:layout_marginTop="10dp"/>
         </TableRow>
 
         <TableRow
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_gravity="right"
-            android:layout_marginTop="-15dp"
+            android:layout_marginTop="5dp"
             android:gravity="right">
 
             <TextView

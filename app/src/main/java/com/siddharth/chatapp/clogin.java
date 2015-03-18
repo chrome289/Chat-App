@@ -200,6 +200,8 @@ public class clogin extends Fragment implements View.OnClickListener
             Object[] o = new Object[2];
             o[0] = sharedPref.getString("username", "");
             o[1] = sharedPref.getString("password", "");
+            username=sharedPref.getString("username", "");
+            password = sharedPref.getString("password", "");
             socket.emit("login", o[0], o[1]);
         }
         return v;
@@ -284,7 +286,7 @@ public class clogin extends Fragment implements View.OnClickListener
             cursor.moveToFirst();
             do
             {
-                String temp = cursor.getString(phoneNumberIdx), temp2 = "";
+                String temp = cursor.getString(phoneNumberIdx), temp2;
                 temp2 = temp.replaceAll("\\D+", "");
                 if (temp2.length() != 10)
                     temp2 = temp2.substring(temp2.length() - 10);
