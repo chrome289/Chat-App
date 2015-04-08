@@ -1,6 +1,8 @@
 package com.siddharth.chatapp;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -322,7 +324,7 @@ public class MainActivity extends ActionBarActivity
             Cursor c = db.rawQuery("select * from user where validfriend = 1", null);
             while (c.moveToNext())
             {
-                Log.v("yyyy",c.getString(0));
+                Log.v("yyyy", c.getString(0));
                 friends.add(c.getString(0));
                 subtext.add(c.getString(1));
                 alias.add(c.getString(3));
@@ -352,6 +354,19 @@ public class MainActivity extends ActionBarActivity
         return true;
     }
 
+    //recursive file delete
+    private void deletedata(File fileOrDirectory)
+    {
+        if (fileOrDirectory.isDirectory())
+            for (File child : fileOrDirectory.listFiles())
+            {
+                child.delete();
+                deletedata(child);
+            }
+
+        fileOrDirectory.delete();
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
     {
@@ -363,6 +378,38 @@ public class MainActivity extends ActionBarActivity
             case R.id.exit:
                 android.os.Process.killProcess(Process.myPid());
                 break;
+            case R.id.logout:
+                new AlertDialog.Builder(this)
+                        .setTitle("All Local data of current user will be deleted ")
+                        .setMessage("Are you sure you want to proceed ?")
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener()
+                        {
+                            public void onClick(DialogInterface dialog, int which)
+                            {
+                                //cleaning previous user activity
+                                String root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
+                                File myDir = new File(root + "/attachments");
+                                deletedata(myDir);
+                                myDir = new File(root + "/saved_images_thumb");
+                                deletedata(myDir);
+                                sharedPref.edit().clear().commit();
+                                getApplicationContext().deleteDatabase("database");
+                                Intent i = new Intent(MainActivity.this, login.class);
+                                finish();
+                                socket.disconnect();
+                                socket.close();
+                                socket.off();
+                                startActivity(i);
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener()
+                        {
+                            public void onClick(DialogInterface dialog, int which)
+                            {
+                            }
+                        })
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
         }
 
         return super.onOptionsItemSelected(item);
@@ -379,7 +426,7 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onResume()
     {
-
+        //resetting array adapter
         if (friends.size() > 0)
         {
             friends.clear();

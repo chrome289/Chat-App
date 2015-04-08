@@ -87,6 +87,7 @@ public class csignup extends Fragment implements View.OnClickListener
                     @Override
                     public void run()
                     {
+                        //wrong login
                         ProgressBar p = (ProgressBar) getView().findViewById(R.id.pb);
                         p.setVisibility(View.INVISIBLE);
                         Button b = (Button) getView().findViewById(R.id.button4);
@@ -111,6 +112,7 @@ public class csignup extends Fragment implements View.OnClickListener
         return v;
     }
 
+    //loading login screen
     private void changefrag()
     {
         getActivity().runOnUiThread(new Runnable()
@@ -148,20 +150,28 @@ public class csignup extends Fragment implements View.OnClickListener
         switch (v.getId())
         {
             case R.id.button4:
-                Log.v("erer", "ytyty");
-                Object[] o = new Object[4];
-                o[0] = ((EditText) getView().findViewById(R.id.editText4)).getText();
-                o[1] = ((EditText) getView().findViewById(R.id.editText5)).getText();
-                o[2] = ((EditText) getView().findViewById(R.id.editText6)).getText();
-                o[3] = ((EditText) getView().findViewById(R.id.editText7)).getText();
-                socket.emit("signup", o);
-                ProgressBar p = (ProgressBar) getView().findViewById(R.id.pb);
-                p.setVisibility(View.VISIBLE);
-                Button b = (Button) getView().findViewById(R.id.button4);
-                b.setEnabled(false);
-                b = (Button) getView().findViewById(R.id.button5);
-                b.setEnabled(false);
-                new LoadImage().execute();
+                String regex = "^[0-9]{10}$";
+                if(((EditText) getView().findViewById(R.id.editText4)).getText().toString().matches(regex))
+                {
+                    Log.v("erer", "ytyty");
+                    Object[] o = new Object[4];
+                    o[0] = ((EditText) getView().findViewById(R.id.editText4)).getText();
+                    o[1] = ((EditText) getView().findViewById(R.id.editText5)).getText();
+                    o[2] = ((EditText) getView().findViewById(R.id.editText6)).getText();
+                    o[3] = ((EditText) getView().findViewById(R.id.editText7)).getText();
+                    socket.emit("signup", o);
+                    ProgressBar p = (ProgressBar) getView().findViewById(R.id.pb);
+                    p.setVisibility(View.VISIBLE);
+                    Button b = (Button) getView().findViewById(R.id.button4);
+                    b.setEnabled(false);
+                    b = (Button) getView().findViewById(R.id.button5);
+                    b.setEnabled(false);
+                    new LoadImage().execute();
+                }
+                else
+                {
+                    Toast.makeText(getActivity().getApplicationContext(), "Invalid Phone Number", Toast.LENGTH_SHORT).show();
+                }
                 break;
             case R.id.button5:
                 Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -223,7 +233,7 @@ public class csignup extends Fragment implements View.OnClickListener
                 try
                 {
 
-                    // open a URL connection to the Servlet
+                    // open a URL connection
                     FileInputStream fileInputStream = new FileInputStream(sourceFile);
 
                     String upLoadServerUri = "http://192.168.70.1";
