@@ -6,6 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -22,23 +25,31 @@ import android.widget.Toast;
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
+import java.util.Locale;
 
-public class csignup extends Fragment implements View.OnClickListener
+public class csignup extends Fragment implements View.OnClickListener,GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
 {
     private android.os.Handler handler = new android.os.Handler();
     private static final int PICK_IMAGE = 0;
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
     Socket socket;
+    public GoogleApiClient mGoogleApiClient;
     public String picturePath = "";
+    public String location="";
     boolean doit = false;
 
     @Override
@@ -51,9 +62,14 @@ public class csignup extends Fragment implements View.OnClickListener
         b.setOnClickListener(this);
         b = (Button) v.findViewById(R.id.button5);
         b.setOnClickListener(this);
+
+        //location
+        buildGoogleApiClient();
+        mGoogleApiClient.connect();
+
         try
         {
-            socket = IO.socket("http://192.168.70.1:80");
+            socket = IO.socket("http://192.168.70.1");
         }
         catch (URISyntaxException e)
         {
@@ -115,19 +131,14 @@ public class csignup extends Fragment implements View.OnClickListener
     //loading login screen
     private void changefrag()
     {
-        getActivity().runOnUiThread(new Runnable()
-        {
+        getActivity().runOnUiThread(new Runnable() {
             @Override
-            public void run()
-            {
-                Runnable r = new Runnable()
-                {
-                    public void run()
-                    {
+            public void run() {
+                Runnable r = new Runnable() {
+                    public void run() {
                         if (!doit)
                             handler.postDelayed(this, 1000);
-                        else
-                        {
+                        else {
                             ProgressBar p = (ProgressBar) getView().findViewById(R.id.pb);
                             p.setVisibility(View.INVISIBLE);
                             Toast.makeText(getActivity().getApplicationContext(), "Registeration complete", Toast.LENGTH_SHORT);
@@ -144,6 +155,13 @@ public class csignup extends Fragment implements View.OnClickListener
         });
     }
 
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient= new GoogleApiClient.Builder(this.getActivity())
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }
     @Override
     public void onClick(View v)
     {
@@ -151,14 +169,15 @@ public class csignup extends Fragment implements View.OnClickListener
         {
             case R.id.button4:
                 String regex = "^[0-9]{10}$";
-                if(((EditText) getView().findViewById(R.id.editText4)).getText().toString().matches(regex))
-                {
+                if(((EditText) getView().findViewById(R.id.editText4)).getText().toString().matches(regex)) {
+
                     Log.v("erer", "ytyty");
-                    Object[] o = new Object[4];
+                    Object[] o = new Object[5];
                     o[0] = ((EditText) getView().findViewById(R.id.editText4)).getText();
                     o[1] = ((EditText) getView().findViewById(R.id.editText5)).getText();
                     o[2] = ((EditText) getView().findViewById(R.id.editText6)).getText();
                     o[3] = ((EditText) getView().findViewById(R.id.editText7)).getText();
+                    o[4] = location;
                     socket.emit("signup", o);
                     ProgressBar p = (ProgressBar) getView().findViewById(R.id.pb);
                     p.setVisibility(View.VISIBLE);
@@ -201,6 +220,36 @@ public class csignup extends Fragment implements View.OnClickListener
 
     }
 
+    @Override
+    public void onConnected(Bundle bundle) {
+        Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (mLastLocation != null) {
+            Log.v("loc", String.valueOf(mLastLocation.getLatitude()));
+            Log.v("loc", String.valueOf(mLastLocation.getLongitude()));
+            Geocoder gcd = new Geocoder(this.getActivity(), Locale.getDefault());
+            List<Address> addresses = null;
+            try {
+                addresses = gcd.getFromLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude(), 1);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (addresses.size() > 0) {
+                Log.v("loc", addresses.get(0).getLocality() + addresses.get(0).getCountryName());
+                location = addresses.get(0).getLocality() + " " + addresses.get(0).getCountryName();
+            }
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
+    }
+
     //class to upload pic async
     private class LoadImage extends AsyncTask<String, String, Integer>
     {
@@ -236,7 +285,7 @@ public class csignup extends Fragment implements View.OnClickListener
                     // open a URL connection
                     FileInputStream fileInputStream = new FileInputStream(sourceFile);
 
-                    String upLoadServerUri = "http://192.168.70.1";
+                    String upLoadServerUri = "192.168.70.1";
                     URL url = new URL(upLoadServerUri);
 
                     // Open a HTTP  connection to  the URL

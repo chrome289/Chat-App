@@ -8,6 +8,9 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -26,22 +29,29 @@ import android.widget.Toast;
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
+import java.util.Locale;
 
 
-public class clogin extends Fragment implements View.OnClickListener
-{
+public class clogin extends Fragment implements View.OnClickListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     private android.os.Handler handler = new android.os.Handler();
     private Socket socket;
     String username, password, fri = "", alias = "", email = "";
     public boolean login = false;
     int a = 0, c = 0;
     Bitmap image;
+    public String location="";
+    GoogleApiClient mGoogleApiClient;
 
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
@@ -65,11 +75,12 @@ public class clogin extends Fragment implements View.OnClickListener
 
         try
         {
-            socket = IO.socket("http://192.168.70.1:80");
+            socket = IO.socket("http://192.168.70.1");
         }
         catch (URISyntaxException e)
         {
             e.printStackTrace();
+            Log.v("4","check");
         }
         socket.on(Socket.EVENT_CONNECT, new Emitter.Listener()
         {
@@ -139,6 +150,7 @@ public class clogin extends Fragment implements View.OnClickListener
                             editor.putBoolean("remember", false);
                         editor.commit();
                         Toast.makeText(getActivity().getApplicationContext(), temp, Toast.LENGTH_SHORT).show();
+                        Log.v("2","check");
                     }
                 });
             }
@@ -204,12 +216,18 @@ public class clogin extends Fragment implements View.OnClickListener
             password = sharedPref.getString("password", "");
             socket.emit("login", o[0], o[1]);
         }
+        Log.v("3","check");
+
+        //location
+        buildGoogleApiClient();
+        mGoogleApiClient.connect();
         return v;
     }
 
     @Override
     public void onClick(View v)
     {
+        Log.v("1","check");
         switch (v.getId())
         {
             case R.id.button3:
@@ -388,17 +406,12 @@ public class clogin extends Fragment implements View.OnClickListener
         o[3] = email;
         socket.emit("storeinfo", o);
         a = 2;
-        getActivity().runOnUiThread(new Runnable()
-        {
+        getActivity().runOnUiThread(new Runnable() {
             @Override
-            public void run()
-            {
-                Runnable r = new Runnable()
-                {
-                    public void run()
-                    {
-                        if (a == 2 && c == 1)
-                        {
+            public void run() {
+                Runnable r = new Runnable() {
+                    public void run() {
+                        if (a == 2 && c == 1) {
 //                          Toast.makeText(getActivity().getApplicationContext(), "Welcome back", Toast.LENGTH_SHORT).show();
                             Log.v("hiui", String.valueOf(a));
                             editor.putString("username", username);
@@ -408,13 +421,52 @@ public class clogin extends Fragment implements View.OnClickListener
                             //findViewById(R.id.loadingPanel).setVisibility(View.GONE);
                             startActivity(new Intent(getActivity().getApplicationContext(), MainActivity.class));
                             getActivity().finish();
-                        }
-                        else
+                            Object[]o=new Object[2];
+                            o[0]=username;
+                            o[1]=location;
+                            socket.emit("takeTimeLoc",o);
+                        } else
                             handler.postDelayed(this, 1000);
                     }
                 };
                 handler.postDelayed(r, 1000);
             }
         });
+    }
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient= new GoogleApiClient.Builder(this.getActivity())
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }
+    @Override
+    public void onConnected(Bundle bundle) {
+        Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (mLastLocation != null) {
+            Log.v("loc", String.valueOf(mLastLocation.getLatitude()));
+            Log.v("loc", String.valueOf(mLastLocation.getLongitude()));
+            Geocoder gcd = new Geocoder(this.getActivity(), Locale.getDefault());
+            List<Address> addresses = null;
+            try {
+                addresses = gcd.getFromLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude(), 1);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (addresses.size() > 0) {
+                Log.v("loc", addresses.get(0).getLocality() + addresses.get(0).getCountryName());
+                location = addresses.get(0).getLocality() + " " + addresses.get(0).getCountryName();
+            }
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
     }
 }

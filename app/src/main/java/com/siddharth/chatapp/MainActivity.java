@@ -75,45 +75,37 @@ public class MainActivity extends ActionBarActivity
 
         try
         {
-            socket = IO.socket("http://192.168.70.1:80");
+            socket = IO.socket("http://192.168.70.1");
         }
         catch (URISyntaxException e)
         {
             e.printStackTrace();
         }
-        socket.on(Socket.EVENT_CONNECT, new Emitter.Listener()
-        {
+        socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
             @Override
-            public void call(Object... args)
-            {
+            public void call(Object... args) {
                 Log.v("con", "nected");
             }
 
-        }).on("messaged2", new Emitter.Listener()
-        {
+        }).on("messaged2", new Emitter.Listener() {
 
             @Override
-            public void call(Object[] args)
-            {
+            public void call(Object[] args) {
                 final String temp = String.valueOf(args[0]);
                 send_to = (String) args[1];
                 final String temp2 = String.valueOf(args[2]);
                 Log.v("say", "1");
-                runOnUiThread(new Runnable()
-                {
+                runOnUiThread(new Runnable() {
                     @Override
-                    public void run()
-                    {
+                    public void run() {
                         //Log.v("sgfg", String.valueOf(sharedPref.getBoolean("handleit",false)));
-                        if (!sharedPref.getBoolean("handleit", false))
-                        {
+                        if (!sharedPref.getBoolean("handleit", false)) {
                             db.execSQL("update user set lastmessage = \"" + send_to + "  :  " + temp + "\" where friend = \"" + send_to + "\"");
                             db.execSQL("insert into '" + send_to + "' values (\"" + send_to + "\" , \"" + username + "\" , \"" + temp + "\" , 1,0,\"" + temp2 + "\")");
                             Toast.makeText(getApplicationContext(), "recieved", Toast.LENGTH_SHORT).show();
                             int x;
                             //Log.v("fdf", String.valueOf(friends.size()));
-                            for (x = 0; x < friends.size(); x++)
-                            {
+                            for (x = 0; x < friends.size(); x++) {
                                 if (friends.get(x).equals(send_to))
                                     break;
                             }
