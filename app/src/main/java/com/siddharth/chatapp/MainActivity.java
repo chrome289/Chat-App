@@ -55,6 +55,7 @@ public class MainActivity extends ActionBarActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_right);
         getSupportActionBar().setTitle("Chat App");
         TextView t = (TextView) findViewById(R.id.textView);
         t.setMovementMethod(new ScrollingMovementMethod());
@@ -388,9 +389,6 @@ public class MainActivity extends ActionBarActivity
                                 getApplicationContext().deleteDatabase("database");
                                 Intent i = new Intent(MainActivity.this, login.class);
                                 finish();
-                                socket.disconnect();
-                                socket.close();
-                                socket.off();
                                 startActivity(i);
                             }
                         })
@@ -412,6 +410,7 @@ public class MainActivity extends ActionBarActivity
         editor.putBoolean("handleit", true);
         editor.commit();
         startActivity(new Intent(this, chatwin.class));
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_right);
         //finish();
     }
 

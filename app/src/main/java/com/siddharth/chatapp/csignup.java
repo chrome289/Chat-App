@@ -6,9 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -25,36 +22,26 @@ import android.widget.Toast;
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
 
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.List;
-import java.util.Locale;
 
-public class csignup extends Fragment implements View.OnClickListener,GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
-{
+public class csignup extends Fragment implements View.OnClickListener {
     private android.os.Handler handler = new android.os.Handler();
     private static final int PICK_IMAGE = 0;
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
     Socket socket;
-    public GoogleApiClient mGoogleApiClient;
     public String picturePath = "";
-    public String location="";
     boolean doit = false;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
-    {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.csignup, container, false);
         Button b = (Button) v.findViewById(R.id.button4);
         sharedPref = getActivity().getSharedPreferences("setting", Context.MODE_PRIVATE);
@@ -63,46 +50,31 @@ public class csignup extends Fragment implements View.OnClickListener,GoogleApiC
         b = (Button) v.findViewById(R.id.button5);
         b.setOnClickListener(this);
 
-        //location
-        buildGoogleApiClient();
-        mGoogleApiClient.connect();
-
-        try
-        {
+        try {
             socket = IO.socket("http://192.168.70.1");
-        }
-        catch (URISyntaxException e)
-        {
+        } catch (URISyntaxException e) {
             e.printStackTrace();
         }
-        socket.on(Socket.EVENT_CONNECT, new Emitter.Listener()
-        {
+        socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
             @Override
-            public void call(Object... args)
-            {
+            public void call(Object... args) {
                 Log.v("con", "nected");
             }
 
-        }).on("sign", new Emitter.Listener()
-        {
+        }).on("sign", new Emitter.Listener() {
             @Override
-            public void call(Object... args)
-            {
+            public void call(Object... args) {
                 final String temp = String.valueOf(args[0]) + "\n";
                 Log.v("lo", temp);
                 changefrag();
             }
-        }).on("wsign", new Emitter.Listener()
-        {
+        }).on("wsign", new Emitter.Listener() {
 
             @Override
-            public void call(Object... args)
-            {
-                getActivity().runOnUiThread(new Runnable()
-                {
+            public void call(Object... args) {
+                getActivity().runOnUiThread(new Runnable() {
                     @Override
-                    public void run()
-                    {
+                    public void run() {
                         //wrong login
                         ProgressBar p = (ProgressBar) getView().findViewById(R.id.pb);
                         p.setVisibility(View.INVISIBLE);
@@ -114,12 +86,10 @@ public class csignup extends Fragment implements View.OnClickListener,GoogleApiC
                     }
                 });
             }
-        }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener()
-        {
+        }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
 
             @Override
-            public void call(Object... args)
-            {
+            public void call(Object... args) {
                 Log.v("dis", String.valueOf(args[0]));
             }
 
@@ -129,8 +99,7 @@ public class csignup extends Fragment implements View.OnClickListener,GoogleApiC
     }
 
     //loading login screen
-    private void changefrag()
-    {
+    private void changefrag() {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -155,29 +124,19 @@ public class csignup extends Fragment implements View.OnClickListener,GoogleApiC
         });
     }
 
-    protected synchronized void buildGoogleApiClient() {
-        mGoogleApiClient= new GoogleApiClient.Builder(this.getActivity())
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-    }
     @Override
-    public void onClick(View v)
-    {
-        switch (v.getId())
-        {
+    public void onClick(View v) {
+        switch (v.getId()) {
             case R.id.button4:
                 String regex = "^[0-9]{10}$";
-                if(((EditText) getView().findViewById(R.id.editText4)).getText().toString().matches(regex)) {
+                if (((EditText) getView().findViewById(R.id.editText4)).getText().toString().matches(regex)) {
 
                     Log.v("erer", "ytyty");
-                    Object[] o = new Object[5];
+                    Object[] o = new Object[4];
                     o[0] = ((EditText) getView().findViewById(R.id.editText4)).getText();
                     o[1] = ((EditText) getView().findViewById(R.id.editText5)).getText();
                     o[2] = ((EditText) getView().findViewById(R.id.editText6)).getText();
                     o[3] = ((EditText) getView().findViewById(R.id.editText7)).getText();
-                    o[4] = location;
                     socket.emit("signup", o);
                     ProgressBar p = (ProgressBar) getView().findViewById(R.id.pb);
                     p.setVisibility(View.VISIBLE);
@@ -186,9 +145,7 @@ public class csignup extends Fragment implements View.OnClickListener,GoogleApiC
                     b = (Button) getView().findViewById(R.id.button5);
                     b.setEnabled(false);
                     new LoadImage().execute();
-                }
-                else
-                {
+                } else {
                     Toast.makeText(getActivity().getApplicationContext(), "Invalid Phone Number", Toast.LENGTH_SHORT).show();
                 }
                 break;
@@ -199,11 +156,9 @@ public class csignup extends Fragment implements View.OnClickListener,GoogleApiC
         }
     }
 
-    public void onActivityResult(int requestCode, int resultCode, Intent data)
-    {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (data != null)
-        {
+        if (data != null) {
             Uri selectedImage = data.getData();
             String[] filePathColumn = {MediaStore.Images.Media.DATA};
             Cursor cursor = getActivity().getContentResolver().query(selectedImage, filePathColumn, null, null, null);
@@ -212,58 +167,23 @@ public class csignup extends Fragment implements View.OnClickListener,GoogleApiC
             picturePath = cursor.getString(columnIndex);
             Log.v("efrsers", picturePath);
             cursor.close();
-        }
-        else
-        {
+        } else {
             Toast.makeText(getActivity(), "again", Toast.LENGTH_SHORT).show();
         }
 
     }
 
-    @Override
-    public void onConnected(Bundle bundle) {
-        Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (mLastLocation != null) {
-            Log.v("loc", String.valueOf(mLastLocation.getLatitude()));
-            Log.v("loc", String.valueOf(mLastLocation.getLongitude()));
-            Geocoder gcd = new Geocoder(this.getActivity(), Locale.getDefault());
-            List<Address> addresses = null;
-            try {
-                addresses = gcd.getFromLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude(), 1);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            if (addresses.size() > 0) {
-                Log.v("loc", addresses.get(0).getLocality() + addresses.get(0).getCountryName());
-                location = addresses.get(0).getLocality() + " " + addresses.get(0).getCountryName();
-            }
-        }
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-
-    }
-
     //class to upload pic async
-    private class LoadImage extends AsyncTask<String, String, Integer>
-    {
+    private class LoadImage extends AsyncTask<String, String, Integer> {
         @Override
-        protected void onPreExecute()
-        {
+        protected void onPreExecute() {
             super.onPreExecute();
         }
 
-        protected Integer doInBackground(String... args)
-        {
+        protected Integer doInBackground(String... args) {
             final String fileName = picturePath, uploadFilePath = "d:/nodejs", uploadFileName = "d***";
-            HttpURLConnection conn ;
-            DataOutputStream dos ;
+            HttpURLConnection conn;
+            DataOutputStream dos;
             String lineEnd = "\r\n";
             String twoHyphens = "--";
             String boundary = "*****";
@@ -272,15 +192,11 @@ public class csignup extends Fragment implements View.OnClickListener,GoogleApiC
             int maxBufferSize = 1 * 1024 * 1024;
             File sourceFile = new File(picturePath);
 
-            if (!sourceFile.isFile())
-            {
-                Log.e("uploadFile", "Source File not exist :"+ uploadFilePath + "" + uploadFileName);
-                Log.v("Source File not exist :",uploadFilePath + "" + uploadFileName);
-            }
-            else
-            {
-                try
-                {
+            if (!sourceFile.isFile()) {
+                Log.e("uploadFile", "Source File not exist :" + uploadFilePath + "" + uploadFileName);
+                Log.v("Source File not exist :", uploadFilePath + "" + uploadFileName);
+            } else {
+                try {
 
                     // open a URL connection
                     FileInputStream fileInputStream = new FileInputStream(sourceFile);
@@ -316,8 +232,7 @@ public class csignup extends Fragment implements View.OnClickListener,GoogleApiC
                     // read file and write it into form...
                     bytesRead = fileInputStream.read(buffer, 0, bufferSize);
 
-                    while (bytesRead > 0)
-                    {
+                    while (bytesRead > 0) {
                         dos.write(buffer, 0, bufferSize);
                         bytesAvailable = fileInputStream.available();
                         bufferSize = Math.min(bytesAvailable, maxBufferSize);
@@ -332,10 +247,9 @@ public class csignup extends Fragment implements View.OnClickListener,GoogleApiC
                     int serverResponseCode = conn.getResponseCode();
                     String serverResponseMessage = conn.getResponseMessage();
 
-                    Log.i("uploadFile", "HTTP Response is : "+ serverResponseMessage + ": " + serverResponseCode);
+                    Log.i("uploadFile", "HTTP Response is : " + serverResponseMessage + ": " + serverResponseCode);
 
-                    if (serverResponseCode == 200)
-                    {
+                    if (serverResponseCode == 200) {
 
                         Log.v("babola", "dfd");
                     }
@@ -344,14 +258,10 @@ public class csignup extends Fragment implements View.OnClickListener,GoogleApiC
                     fileInputStream.close();
                     dos.flush();
                     dos.close();
-                }
-                catch (MalformedURLException ex)
-                {
+                } catch (MalformedURLException ex) {
                     ex.printStackTrace();
                     Log.e("Upload file to server", "error: " + ex.getMessage(), ex);
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 
@@ -360,8 +270,7 @@ public class csignup extends Fragment implements View.OnClickListener,GoogleApiC
             return a;
         }
 
-        protected void onPostExecute(Integer imag)
-        {
+        protected void onPostExecute(Integer imag) {
             doit = true;
         }
     }

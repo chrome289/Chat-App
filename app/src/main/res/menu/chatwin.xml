@@ -1,0 +1,27 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:tools="http://schemas.android.com/tools"
+      tools:context=".chatwin">
+    <item android:id="@+id/exit"
+          android:title="Exit"
+          android:orderInCategory="100"
+          app:showAsAction="never"/>
+    <item android:id="@+id/settings"
+          android:title="Settings"
+          android:orderInCategory="99"
+          app:showAsAction="never"/>
+    <item android:id="@+id/location"
+          android:title="Location"
+          android:icon="@drawable/ic_action_place"
+          android:orderInCategory="1"
+          app:showAsAction="always"/>
+    <item android:id="@+id/attach"
+          android:title="Attachments"
+          android:icon="@drawable/ic_action_attachment"
+          android:orderInCategory="2"
+          app:showAsAction="always"/>
+    <item android:id="@+id/refresh"
+        android:title="Refresh"
+        android:orderInCategory="98"
+        app:showAsAction="never"/>
+      </menu>

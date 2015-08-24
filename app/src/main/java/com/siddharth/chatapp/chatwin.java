@@ -27,7 +27,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -123,12 +122,11 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
                 @Override
                 public void call(Object[] args) {
                     final String temp = String.valueOf(args[0]);
-                    final String temp2 = String.valueOf(args[1]);
                     Log.v("time", "12");
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            getSupportActionBar().setSubtitle("Last seen at " +temp+ " at "+temp2);
+                            //getSupportActionBar().setSubtitle(Html.fromHtml("<small>Last seen at " +temp+"</small>"));
                         }
                     });
                 }
@@ -138,7 +136,7 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
                 @Override
                 public void call(Object[] args) {
                     final String temp = String.valueOf(args[0]);
-                    final String temp2 = String.valueOf(args[1]);
+                    final String temp2 = String.valueOf(args[2]);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -261,7 +259,6 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
                                 uploaded_imagepath.remove(0);
                             } else {
                                 image.add(null);
-
                                 db.execSQL("update user set lastmessage = \"You  :  " + temp + "\" where friend = \"" + send_to + "\"");
                                 db.execSQL("insert into '" + send_to + "' values (\"" + username + "\" , \"" + send_to + "\" , \"" + temp + "\" , 1," + n + ",\"" + temp2 + "\")");
                                 chatlist.add(temp);
@@ -278,13 +275,6 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
                 @Override
                 public void call(Object... args) {
                     Log.v("", "done");
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Button b = (Button) findViewById(R.id.button2);
-                            b.setEnabled(true);
-                        }
-                    });
                 }
 
             }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
@@ -297,18 +287,26 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
             });
             socket.connect();
             l = (ListView) findViewById(R.id.listView2);
+
+
+
             l.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Intent intent = new Intent();
-                    intent.setAction(Intent.ACTION_VIEW);
-                    Log.v("gile", chatlist.get(position));
-                    intent.setDataAndType(Uri.fromFile(new File(chatlist.get(position))), "image/*");
-                    startActivity(intent);
+                    Bitmap i=image.get(position);
+                    if(image.get(position)!=null) {
+                        Intent intent = new Intent();
+                        intent.setAction(Intent.ACTION_VIEW);
+                        Log.v("gil", chatlist.get(position));
+                        intent.setDataAndType(Uri.fromFile(new File(chatlist.get(position))), "image/*");
+                        startActivity(intent);
+                    }
+                    else{
+                        Log.v("gile", String.valueOf(image.get(position)));
+                    }
                 }
             });
-            View tview = null;
             restorehistory();
-            refresh(tview);
+            refresh();
 
             Object[]o=new Object[1];
             o[0]=send_to;
@@ -318,8 +316,6 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
 
     //restore previous chat history
     private void restorehistory() {
-        Button b = (Button) findViewById(R.id.button2);
-        b.setEnabled(false);
         Cursor c = db.rawQuery("select * from \"" + send_to + "\"", null);
         while (c.moveToNext()) {
             friend1.add(c.getString(0));
@@ -341,22 +337,12 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
         }
 
         arrayAdapter.notifyDataSetChanged();
-        b.setEnabled(true);
-    }
-
-    protected synchronized void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
     }
 
     //send message
     public void taken(View view) {
-
         String temp;
-        Object[] args = new Object[5];
+        Object[] args = new Object[4];
         EditText e = (EditText) findViewById(R.id.editText);
         temp = String.valueOf(e.getText());
         e.setText("");
@@ -364,21 +350,18 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
         args[1] = username;
         args[2] = send_to;
         args[3] = 0;
-        args[4] = location;
         socket.emit("takethis", args);
 
     }
 
     //refresh chat history
-    public void refresh(View view) {
+    public void refresh() {
 
         Log.v("say", "3");
         Object[] args = new Object[2];
         args[0] = username;
         args[1] = send_to;
         socket.emit("refresh", args[0], args[1]);
-        Button b = (Button) findViewById(R.id.button2);
-        b.setEnabled(false);
     }
 
     @Override
@@ -390,10 +373,18 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
                 editor.putBoolean("handleit", false);
                 editor.commit();
                 finish();
-                return true;
+                overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_left);
+                break;
             case R.id.attach:
                 Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                 startActivityForResult(galleryIntent, PICK_IMAGE);
+                break;
+            case R.id.location:
+                EditText e = (EditText) findViewById(R.id.editText);
+                e.setText(e.getText()+" "+location);
+                break;
+            case R.id.refresh:
+                refresh();
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -435,6 +426,7 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
         editor.putBoolean("handleit", false);
         editor.commit();
         finish();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_left);
     }
 
     @Override
@@ -445,6 +437,13 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
         return super.onCreateOptionsMenu(menu);
     }
 
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient= new GoogleApiClient.Builder(this.getApplicationContext())
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }
     @Override
     public void onConnected(Bundle bundle) {
         Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
@@ -458,9 +457,12 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            if (addresses.size() > 0)
-                Log.v("loc", addresses.get(0).getLocality() + addresses.get(0).getCountryName());
-            location = addresses.get(0).getLocality() + " " + addresses.get(0).getCountryName();
+            if(addresses!=null) {
+                if (addresses.size() > 0) {
+                    Log.v("loc", addresses.get(0).getLocality() + addresses.get(0).getCountryName());
+                    location = addresses.get(0).getLocality() + ", " + addresses.get(0).getCountryName();
+                }
+            }
         }
     }
 
@@ -473,7 +475,6 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
     }
-
     //class to upload pic async
     private class LoadImage extends AsyncTask<String, String, Integer> {
         @Override
@@ -551,7 +552,6 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
                     Log.i("uploadFile", "HTTP Response is : " + serverResponseMessage + ": " + serverResponseCode);
 
                     if (serverResponseCode == 200) {
-
                         Log.v("babola", "dfd");
                     }
 

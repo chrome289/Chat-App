@@ -17,8 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-public class chatlistadapter extends BaseAdapter
-{
+public class chatlistadapter extends BaseAdapter {
     Activity context;
     ArrayList<String> title;
     ArrayList<String> friend1;
@@ -26,8 +25,7 @@ public class chatlistadapter extends BaseAdapter
     ArrayList<String> time;
     ArrayList<Boolean> showDate;
 
-    public chatlistadapter(Activity context, ArrayList<String> title, ArrayList<String> friend1, ArrayList<Bitmap> image, ArrayList<String> time, ArrayList<Boolean> showDate)
-    {
+    public chatlistadapter(Activity context, ArrayList<String> title, ArrayList<String> friend1, ArrayList<Bitmap> image, ArrayList<String> time, ArrayList<Boolean> showDate) {
         super();
         this.context = context;
         this.title = title;
@@ -37,58 +35,46 @@ public class chatlistadapter extends BaseAdapter
         this.showDate = showDate;
     }
 
-    public int getCount()
-    {
+    public int getCount() {
         return title.size();
     }
 
-    public Object getItem(int position)
-    {
+    public Object getItem(int position) {
         return null;
     }
 
-    public long getItemId(int position)
-    {
+    public long getItemId(int position) {
         return 0;
     }
 
-    public View getView(int position, View convertView, ViewGroup parent)
-    {
+    public View getView(int position, View convertView, ViewGroup parent) {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         SharedPreferences sharedPref = context.getSharedPreferences("setting", Context.MODE_PRIVATE);
         String username = sharedPref.getString("username", "");
         int resource;
 
         //Log.v("","+"+title.get(position).substring(0,8)+"+");
-        if (friend1.get(position).equals(username))
-        {
+        if (friend1.get(position).equals(username)) {
             resource = R.layout.chatlist;
-        }
-        else
-        {
+        } else {
             resource = R.layout.chatlist2;
         }
 
         convertView = inflater.inflate(resource, null);
 
-        switch (resource)
-        {
+        switch (resource) {
             case R.layout.chatlist:
                 TextView aA = (TextView) convertView.findViewById(R.id.textView9);
                 if (!showDate.get(position))
                     aA.setVisibility(View.GONE);
-                else
-                {
+                else {
                     String t = time.get(position).substring(0, 10);
                     SimpleDateFormat input = new SimpleDateFormat("dd:MM:yyyy");
                     SimpleDateFormat output = new SimpleDateFormat("MMM dd yyyy");
-                    try
-                    {
+                    try {
                         Date oneWayTripDate = input.parse(t);
                         aA.setText((output.format(oneWayTripDate)));
-                    }
-                    catch (ParseException e)
-                    {
+                    } catch (ParseException e) {
                         e.printStackTrace();
                     }
                 }
@@ -96,12 +82,13 @@ public class chatlistadapter extends BaseAdapter
                 aA.setText(title.get(position));
 
                 ImageView i = (ImageView) convertView.findViewById(R.id.imageView3);
-                if (image.get(position) == null)
+                if (image.get(position) == null) {
                     i.setVisibility(View.INVISIBLE);
-                else
-                {
+                    aA.setVisibility(View.VISIBLE);
+                }
+                else {
                     i.setVisibility(View.VISIBLE);
-                    aA.setVisibility(View.GONE);
+                    aA.setVisibility(View.INVISIBLE);
                 }
                 i.setImageBitmap(image.get(position));
 
@@ -110,13 +97,10 @@ public class chatlistadapter extends BaseAdapter
                 Log.v("dsds", t);
                 SimpleDateFormat input = new SimpleDateFormat("HH:mm:SS");
                 SimpleDateFormat output = new SimpleDateFormat("hh:mm aa");
-                try
-                {
+                try {
                     Date oneWayTripDate = input.parse(t);
                     aA.setText((output.format(oneWayTripDate)));
-                }
-                catch (ParseException e)
-                {
+                } catch (ParseException e) {
                     e.printStackTrace();
                 }
                 break;
@@ -124,18 +108,15 @@ public class chatlistadapter extends BaseAdapter
                 aA = (TextView) convertView.findViewById(R.id.textView8);
                 if (!showDate.get(position))
                     aA.setVisibility(View.GONE);
-                else
-                {
+                else {
+                    Log.v("time", time.get(position).substring(0));
                     t = time.get(position).substring(0, 10);
                     input = new SimpleDateFormat("dd:MM:yyyy");
                     output = new SimpleDateFormat("MMM dd, yyyy");
-                    try
-                    {
+                    try {
                         Date oneWayTripDate = input.parse(t);
                         aA.setText((output.format(oneWayTripDate)));
-                    }
-                    catch (ParseException e)
-                    {
+                    } catch (ParseException e) {
                         e.printStackTrace();
                     }
                 }
@@ -143,27 +124,25 @@ public class chatlistadapter extends BaseAdapter
                 bB.setText(title.get(position));
 
                 i = (ImageView) convertView.findViewById(R.id.imageView2);
-                if (image.get(position) == null)
+                if (image.get(position) == null) {
                     i.setVisibility(View.INVISIBLE);
-                else
-                {
+                    bB.setVisibility(View.VISIBLE);
+                } else {
                     i.setVisibility(View.VISIBLE);
-                    bB.setVisibility(View.GONE);
+                    bB.setVisibility(View.INVISIBLE);
                 }
                 i.setImageBitmap(image.get(position));
 
                 bB = (TextView) convertView.findViewById(R.id.textView5);
+
                 t = time.get(position).substring(11);
                 Log.v("dsds", t);
                 input = new SimpleDateFormat("HH:mm:SS");
                 output = new SimpleDateFormat("hh:mm aa");
-                try
-                {
+                try {
                     Date oneWayTripDate = input.parse(t);
                     bB.setText((output.format(oneWayTripDate)));
-                }
-                catch (ParseException e)
-                {
+                } catch (ParseException e) {
                     e.printStackTrace();
                 }
                 break;

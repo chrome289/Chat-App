@@ -18,17 +18,21 @@
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTask"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden">
         </activity>
         <activity
             android:name=".chatwin"
+            android:launchMode="singleTask"
             android:parentActivityName="com.siddharth.chatapp.MainActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden">
         </activity>
         <activity
             android:name=".login"
             android:launchMode="singleTask"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
