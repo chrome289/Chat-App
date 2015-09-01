@@ -105,7 +105,7 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
         mGoogleApiClient.connect();
 
         try {
-            socket = IO.socket("http://192.168.70.1");
+            socket = IO.socket(login.ServerAddress);
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
@@ -488,7 +488,7 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
             DataOutputStream dos;
             String lineEnd = "\r\n", temp = "", twoHyphens = "--", boundary = "*****";
             byte[] buffer;
-            int maxBufferSize = 1 * 1024 * 1024, bytesRead, bytesAvailable, bufferSize;
+            int maxBufferSize = 1024 * 1024, bytesRead, bytesAvailable, bufferSize;
             File sourceFile = new File(picturePath);
             String filenameArray[] = picturePath.split("\\.");
             String ex = filenameArray[filenameArray.length - 1];
@@ -502,7 +502,7 @@ public class chatwin extends ActionBarActivity implements GoogleApiClient.Connec
                     // open a URL connection to the Servlet
                     FileInputStream fileInputStream = new FileInputStream(sourceFile);
 
-                    String upLoadServerUri = "http://192.168.70.1/attachments";
+                    String upLoadServerUri = login.ServerAddress+"/attachments";
                     URL url = new URL(upLoadServerUri);
 
                     // Open a HTTP  connection to  the URL

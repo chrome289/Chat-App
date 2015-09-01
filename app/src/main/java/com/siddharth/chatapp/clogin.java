@@ -46,66 +46,55 @@ public class clogin extends Fragment implements View.OnClickListener {
     SharedPreferences.Editor editor;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
-    {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.clogin, container, false);
         Button b = (Button) v.findViewById(R.id.button3);
         sharedPref = getActivity().getSharedPreferences("setting", Context.MODE_PRIVATE);
         editor = sharedPref.edit();
+
         b.setOnClickListener(this);
         b = (Button) v.findViewById(R.id.button4);
         b.setOnClickListener(this);
         CheckBox c = (CheckBox) v.findViewById(R.id.checkBox);
         c.setOnClickListener(this);
+
         if (c.isChecked())
             editor.putBoolean("remember", true);
         else
             editor.putBoolean("remember", false);
 
-        try
-        {
-            socket = IO.socket("http://192.168.70.1");
-        }
-        catch (URISyntaxException e)
-        {
+        try {
+            socket = IO.socket(com.siddharth.chatapp.login.ServerAddress);
+        } catch (URISyntaxException e) {
             e.printStackTrace();
-            Log.v("4","check");
+            Log.v("4", "check");
         }
-        socket.on(Socket.EVENT_CONNECT, new Emitter.Listener()
-        {
+        socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
             @Override
-            public void call(Object... args)
-            {
+            public void call(Object... args) {
                 Log.v("con", "nected");
             }
 
-        }).on("message", new Emitter.Listener()
-        {
+        }).on("message", new Emitter.Listener() {
             @Override
-            public void call(Object... args)
-            {
+            public void call(Object... args) {
                 final String temp = String.valueOf(args[0]) + "\n";
                 Log.v("lo", temp);
-                getActivity().runOnUiThread(new Runnable()
-                {
+                getActivity().runOnUiThread(new Runnable() {
                     @Override
-                    public void run()
-                    {
+                    public void run() {
                         Toast.makeText(getActivity().getApplicationContext(), temp, Toast.LENGTH_SHORT).show();
                     }
                 });
             }
-        }).on("listupdated", new Emitter.Listener()
-        {
+        }).on("listupdated", new Emitter.Listener() {
 
             @Override
-            public void call(Object... args)
-            {
-                getActivity().runOnUiThread(new Runnable()
-                {
+            public void call(Object... args) {
+                getActivity().runOnUiThread(new Runnable() {
                     @Override
-                    public void run()
-                    {
+                    public void run() {
+                        //friend list updated proceed with login
                         login = true;
                         Log.v("fri", "ends");
                         Toast.makeText(getActivity().getApplicationContext(), "All set", Toast.LENGTH_SHORT).show();
@@ -114,23 +103,24 @@ public class clogin extends Fragment implements View.OnClickListener {
                 });
             }
 
-        }).on("login", new Emitter.Listener()
-        {
+        }).on("login", new Emitter.Listener() {
             @Override
-            public void call(Object... args)
-            {
+            public void call(Object... args) {
                 final String temp = String.valueOf(args[0]) + "\n";
-                getActivity().runOnUiThread(new Runnable()
-                {
+                getActivity().runOnUiThread(new Runnable() {
                     @Override
-                    public void run()
-                    {
+                    public void run() {
+                        //login successful
                         login = true;
+
+                        //get friend list
                         get_contacts();
                         Object[] t = new Object[2];
                         t[0] = username;
                         t[1] = fri;
                         Log.v("sds", "fri");
+
+                        //check if user exist in friend database ,add contacts
                         socket.emit("checkuserexist", t);
                         CheckBox c = (CheckBox) getView().findViewById(R.id.checkBox);
                         if (c.isChecked())
@@ -139,16 +129,14 @@ public class clogin extends Fragment implements View.OnClickListener {
                             editor.putBoolean("remember", false);
                         editor.commit();
                         Toast.makeText(getActivity().getApplicationContext(), temp, Toast.LENGTH_SHORT).show();
-                        Log.v("2","check");
+                        Log.v("2", "check");
                     }
                 });
             }
 
-        }).on("ready", new Emitter.Listener()
-        {
+        }).on("ready", new Emitter.Listener() {
             @Override
-            public void call(Object... args)
-            {
+            public void call(Object... args) {
                 Object[] t = new Object[2];
                 t[0] = username;
                 t[1] = fri;
@@ -156,20 +144,19 @@ public class clogin extends Fragment implements View.OnClickListener {
                 //Toast.makeText(getActivity().getApplicationContext(), temp, Toast.LENGTH_SHORT).show();
             }
 
-        }).on("wlogin", new Emitter.Listener()
-        {
+        }).on("wlogin", new Emitter.Listener() {
 
             @Override
-            public void call(Object... args)
-            {
+            public void call(Object... args) {
                 final String temp = String.valueOf(args[0]) + "\n";
-                getActivity().runOnUiThread(new Runnable()
-                {
+                getActivity().runOnUiThread(new Runnable() {
                     @Override
-                    public void run()
-                    {
+                    public void run() {
+                        //wrong credentials
                         Log.v("lo", temp);
                         login = false;
+
+                        //reset login preference
                         editor.putString("username", "");
                         editor.putString("password", "");
                         editor.putString("alias", "");
@@ -185,38 +172,35 @@ public class clogin extends Fragment implements View.OnClickListener {
                     }
                 });
             }
-        }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener()
-        {
+        }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
 
             @Override
-            public void call(Object... args)
-            {
+            public void call(Object... args) {
                 Log.v("dis", String.valueOf(args[0]));
             }
 
         });
         socket.connect();
-        if (sharedPref.getBoolean("remember", false))
-        {
+        if (sharedPref.getBoolean("remember", false)) {
             Object[] o = new Object[2];
             o[0] = sharedPref.getString("username", "");
             o[1] = sharedPref.getString("password", "");
-            username=sharedPref.getString("username", "");
+            username = sharedPref.getString("username", "");
             password = sharedPref.getString("password", "");
             socket.emit("login", o[0], o[1]);
         }
-        Log.v("3","check");
+        Log.v("3", "check");
 
         return v;
     }
 
     @Override
-    public void onClick(View v)
-    {
-        Log.v("1","check");
-        switch (v.getId())
-        {
+    public void onClick(View v) {
+        Log.v("1", "check");
+        switch (v.getId()) {
             case R.id.button3:
+
+                //call for login disable UI
                 EditText e = (EditText) getView().findViewById(R.id.editText2);
                 username = String.valueOf(e.getText());
                 e = (EditText) getView().findViewById(R.id.editText3);
@@ -231,16 +215,13 @@ public class clogin extends Fragment implements View.OnClickListener {
                 //password = "1";
                 Object[] o = new Object[2];
 
-                if (username.length() == 0 || password.length() == 0)
-                {
+                //set username & password
+                if (username.length() == 0 || password.length() == 0) {
                     o[0] = sharedPref.getString("username", "");
                     o[1] = sharedPref.getString("password", "");
                     Toast.makeText(getActivity().getApplicationContext(), "Wrong Credentials", Toast.LENGTH_SHORT).show();
-                }
-                else
-                {
-                    if (sharedPref.getBoolean("remember", false))
-                    {
+                } else {
+                    if (sharedPref.getBoolean("remember", false)) {
                         Log.v("howdy", "ihyihih");
                         o[0] = username;
                         o[1] = password;
@@ -248,19 +229,19 @@ public class clogin extends Fragment implements View.OnClickListener {
                         editor.putString("password", password);
                         editor.commit();
                         socket.emit("login", o[0], o[1]);
-                    }
-                    else
-                    {
+                    } else {
                         o[0] = username;
                         o[1] = password;
                         editor.putString("username", username);
                         editor.putString("password", password);
                         editor.commit();
+                        //authenticate login
                         socket.emit("login", o[0], o[1]);
                     }
                 }
                 break;
             case R.id.button4:
+                //call for signup
                 csignup newFragment = new csignup();
                 FragmentTransaction ft = getFragmentManager().beginTransaction();
                 ft.replace(R.id.content_frame, newFragment, "csignup");
@@ -268,6 +249,7 @@ public class clogin extends Fragment implements View.OnClickListener {
                 getFragmentManager().executePendingTransactions();
                 break;
             case R.id.checkBox:
+                //changed remember me checkbox
                 CheckBox c = (CheckBox) getView().findViewById(R.id.checkBox);
                 if (c.isChecked())
                     editor.putBoolean("remember", true);
@@ -279,34 +261,28 @@ public class clogin extends Fragment implements View.OnClickListener {
     }
 
     //get contacts
-    private void get_contacts()
-    {
+    private void get_contacts() {
         Log.v("cal", "led");
         Cursor cursor = null;
-        try
-        {
+        try {
+            //get phone number of contacts
             cursor = getActivity().getApplicationContext().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
             int phoneNumberIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
             cursor.moveToFirst();
-            do
-            {
+            do {
                 String temp = cursor.getString(phoneNumberIdx), temp2;
                 temp2 = temp.replaceAll("\\D+", "");
                 if (temp2.length() != 10)
                     temp2 = temp2.substring(temp2.length() - 10);
                 fri = temp2 + "," + fri;
             }
+
             while (cursor.moveToNext());
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             Log.v("here", "1");
-        }
-        finally
-        {
-            if (cursor != null)
-            {
+        } finally {
+            if (cursor != null) {
                 cursor.close();
             }
         }
@@ -314,82 +290,63 @@ public class clogin extends Fragment implements View.OnClickListener {
     }
 
     //class to download pic async
-    private class LoadImage extends AsyncTask<String, String, Bitmap>
-    {
+    private class LoadImage extends AsyncTask<String, String, Bitmap> {
         File file;
 
         @Override
-        protected void onPreExecute()
-        {
+        protected void onPreExecute() {
             super.onPreExecute();
         }
 
-        protected Bitmap doInBackground(String... args)
-        {
+        protected Bitmap doInBackground(String... args) {
             Bitmap bitmap = null;
-            try
-            {
+            try {
                 bitmap = BitmapFactory.decodeStream((InputStream) new URL(args[0]).getContent());
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 e.printStackTrace();
                 Log.v("here", "2");
             }
             return bitmap;
         }
 
-        protected void onPostExecute(Bitmap imag)
-        {
-            if (imag != null)
-            {
+        protected void onPostExecute(Bitmap imag) {
+            if (imag != null) {
                 image = imag;
-                try
-                {
+                try {
                     FileOutputStream out = new FileOutputStream(file);
                     imag.compress(Bitmap.CompressFormat.PNG, 100, out);
                     out.flush();
                     out.close();
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     e.printStackTrace();
                     Log.v("here", "3");
                 }
-
-            }
-            else
-            {
+            } else {
                 Log.v("error", "fdfd");
             }
-            try
-            {
+            try {
                 //media scanner
                 MediaScannerConnection.scanFile(getActivity().getApplicationContext(), new String[]{file.toString()}, null,
-                        new MediaScannerConnection.OnScanCompletedListener()
-                        {
-                            public void onScanCompleted(String path, Uri uri)
-                            {
+                        new MediaScannerConnection.OnScanCompletedListener() {
+                            public void onScanCompleted(String path, Uri uri) {
                                 Log.i("ExternalStorage", "Scanned " + path + ":");
                                 Log.i("ExternalStorage", "-> uri=" + uri);
                             }
                         });
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 Log.v("here", "4");
             }
             a++;
         }
     }
 
-    private void slogin()
-    {
+    private void slogin() {
         Object[] o = new Object[4];
         o[0] = username;
         o[1] = password;
         o[2] = alias;
         o[3] = email;
+        //store session info for user
         socket.emit("storeinfo", o);
         a = 2;
         getActivity().runOnUiThread(new Runnable() {
@@ -397,7 +354,7 @@ public class clogin extends Fragment implements View.OnClickListener {
             public void run() {
                 Runnable r = new Runnable() {
                     public void run() {
-                        if (a == 2 && c == 1) {
+                        if (a == 2 && c == 1) { //only proceed if dp dwloaded
 //                          Toast.makeText(getActivity().getApplicationContext(), "Welcome back", Toast.LENGTH_SHORT).show();
                             Log.v("hiui", String.valueOf(a));
                             editor.putString("username", username);
@@ -416,5 +373,4 @@ public class clogin extends Fragment implements View.OnClickListener {
             }
         });
     }
-
 }

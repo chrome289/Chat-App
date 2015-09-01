@@ -1,5 +1,6 @@
 package com.siddharth.chatapp;
 
+
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
@@ -51,7 +52,7 @@ public class csignup extends Fragment implements View.OnClickListener {
         b.setOnClickListener(this);
 
         try {
-            socket = IO.socket("http://192.168.70.1");
+            socket = IO.socket(login.ServerAddress);
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
@@ -137,6 +138,7 @@ public class csignup extends Fragment implements View.OnClickListener {
                     o[1] = ((EditText) getView().findViewById(R.id.editText5)).getText();
                     o[2] = ((EditText) getView().findViewById(R.id.editText6)).getText();
                     o[3] = ((EditText) getView().findViewById(R.id.editText7)).getText();
+                    //attempt to signup
                     socket.emit("signup", o);
                     ProgressBar p = (ProgressBar) getView().findViewById(R.id.pb);
                     p.setVisibility(View.VISIBLE);
@@ -144,12 +146,14 @@ public class csignup extends Fragment implements View.OnClickListener {
                     b.setEnabled(false);
                     b = (Button) getView().findViewById(R.id.button5);
                     b.setEnabled(false);
+                    //load image
                     new LoadImage().execute();
                 } else {
                     Toast.makeText(getActivity().getApplicationContext(), "Invalid Phone Number", Toast.LENGTH_SHORT).show();
                 }
                 break;
             case R.id.button5:
+                //select image
                 Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                 startActivityForResult(galleryIntent, PICK_IMAGE);
                 break;
@@ -157,6 +161,7 @@ public class csignup extends Fragment implements View.OnClickListener {
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //select image
         super.onActivityResult(requestCode, resultCode, data);
         if (data != null) {
             Uri selectedImage = data.getData();
@@ -201,7 +206,7 @@ public class csignup extends Fragment implements View.OnClickListener {
                     // open a URL connection
                     FileInputStream fileInputStream = new FileInputStream(sourceFile);
 
-                    String upLoadServerUri = "192.168.70.1";
+                    String upLoadServerUri = login.ServerAddress;
                     URL url = new URL(upLoadServerUri);
 
                     // Open a HTTP  connection to  the URL

@@ -1,18 +1,16 @@
 package com.siddharth.chatapp;
 
-
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 
-
 public class login extends ActionBarActivity
 {
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
-
+public static String ServerAddress= "http://9a3e2fb9.ngrok.io";
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
